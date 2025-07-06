@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductCard from '@/components/ProductCard';
 import BottomNavigation from '@/components/BottomNavigation';
+import Logo from '@/components/Logo';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const Home = () => {
     {
       id: '1',
       name: 'Fashion Design',
-      brand: 'AcZone',
+      brand: 'FashionUp',
       price: 25.15,
       originalPrice: 30.15,
       image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop',
@@ -26,7 +27,7 @@ const Home = () => {
     {
       id: '2',
       name: 'Fashion Design',
-      brand: 'AcZone',
+      brand: 'FashionUp',
       price: 18.50,
       originalPrice: 25.13,
       image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop',
@@ -35,7 +36,7 @@ const Home = () => {
     {
       id: '3',
       name: 'Fashion Design',
-      brand: 'AcZone',
+      brand: 'FashionUp',
       price: 20.15,
       originalPrice: 40.55,
       image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=300&fit=crop',
@@ -44,7 +45,7 @@ const Home = () => {
     {
       id: '4',
       name: 'Fashion Design',
-      brand: 'AcZone',
+      brand: 'FashionUp',
       price: 25.15,
       originalPrice: 30.15,
       image: 'https://images.unsplash.com/photo-1503341960582-b45751874cf0?w=400&h=300&fit=crop',
@@ -60,12 +61,7 @@ const Home = () => {
           <Menu className="w-5 h-5" />
         </Button>
         
-        <div className="flex items-center">
-          <div className="w-6 h-6 bg-pink-500 rounded flex items-center justify-center mr-2">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
-          <span className="font-bold text-gray-900">AcZone</span>
-        </div>
+        <Logo size="md" />
 
         <Button variant="ghost" size="icon">
           <Search className="w-5 h-5" />

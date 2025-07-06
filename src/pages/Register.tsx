@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import Logo from '@/components/Logo';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -35,7 +36,7 @@ const Register = () => {
       await register(name, email, password);
       toast({
         title: "Account created!",
-        description: "Welcome to AcZone! Your account has been created successfully.",
+        description: "Welcome to FashionUp! Your account has been created successfully.",
       });
       navigate('/');
     } catch (error) {
@@ -51,14 +52,11 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
-            <span className="ml-2 text-xl font-bold text-gray-900">AcZone</span>
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-pink-500 mt-1">Join AcZone today!</p>
+          <p className="text-pink-500 mt-1">Join FashionUp today!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

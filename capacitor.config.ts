@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.b4028f7ec5d645f6949c989813a4fd0c',
-  appName: 'cheerful-communication-flow',
+  appName: 'FashionUp',
   webDir: 'dist',
   server: {
     url: 'https://b4028f7e-c5d6-45f6-949c-989813a4fd0c.lovableproject.com?forceHideBadge=true',
