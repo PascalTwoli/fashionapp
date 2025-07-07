@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface ProductCardProps {
   id: string;
@@ -26,11 +27,18 @@ const ProductCard = ({
   onProductClick,
   className 
 }: ProductCardProps) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(id);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    const product = { id, name, brand, price, originalPrice, image, category };
+    
+    if (isWishlisted) {
+      removeFromWishlist(id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   return (

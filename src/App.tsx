@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
+import { WishlistProvider } from "./contexts/WishlistContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
@@ -24,22 +25,24 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/" element={<Home />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/cart" element={<ShoppingBag />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <WishlistProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/cart" element={<ShoppingBag />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>
