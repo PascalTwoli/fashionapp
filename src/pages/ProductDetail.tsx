@@ -123,12 +123,18 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
+    if (!selectedSize || !selectedColor) {
+      alert('Please select both size and color before adding to cart');
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
-      quantity: 1
+      size: selectedSize,
+      color: selectedColor
     });
   };
 
