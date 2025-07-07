@@ -1,11 +1,14 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, ShoppingCart, Star } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCart } from '@/contexts/CartContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import ProductImages from '@/components/ProductImages';
+import ProductInfo from '@/components/ProductInfo';
+import ProductOptions from '@/components/ProductOptions';
+import AddToCartButton from '@/components/AddToCartButton';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -152,105 +155,37 @@ const ProductDetail = () => {
       </div>
 
       {/* Product Images */}
-      <div className="relative">
-        <img 
-          src={product.images[currentImageIndex]} 
-          alt={product.name}
-          className="w-full h-80 object-cover"
-        />
-        {product.images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {product.images.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full ${
-                  currentImageIndex === index ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductImages 
+        images={product.images}
+        productName={product.name}
+        currentImageIndex={currentImageIndex}
+        onImageChange={setCurrentImageIndex}
+      />
 
       {/* Product Info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-500 uppercase">{product.category}</span>
-          <div className="flex items-center">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600 ml-1">{product.rating} ({product.reviews})</span>
-          </div>
-        </div>
+      <ProductInfo 
+        category={product.category}
+        rating={product.rating}
+        reviews={product.reviews}
+        name={product.name}
+        brand={product.brand}
+        price={product.price}
+        originalPrice={product.originalPrice}
+        description={product.description}
+      />
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">{product.name}</h2>
-        <p className="text-gray-600 mb-4">{product.brand}</p>
+      {/* Product Options */}
+      <ProductOptions 
+        sizes={product.sizes}
+        colors={product.colors}
+        selectedSize={selectedSize}
+        selectedColor={selectedColor}
+        onSizeChange={setSelectedSize}
+        onColorChange={setSelectedColor}
+      />
 
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-2xl font-bold text-pink-500">${product.price.toFixed(2)}</span>
-          {product.originalPrice && (
-            <span className="text-lg text-gray-400 line-through">
-              ${product.originalPrice.toFixed(2)}
-            </span>
-          )}
-          {product.originalPrice && (
-            <span className="bg-pink-100 text-pink-600 px-2 py-1 rounded text-sm font-medium">
-              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-            </span>
-          )}
-        </div>
-
-        <p className="text-gray-600 mb-6">{product.description}</p>
-
-        {/* Size Selection */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Size</h3>
-          <div className="flex flex-wrap gap-2">
-            {product.sizes.map((size) => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`px-4 py-2 rounded-lg border ${
-                  selectedSize === size
-                    ? 'border-pink-500 bg-pink-50 text-pink-600'
-                    : 'border-gray-300 text-gray-600'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Color Selection */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-3">Color</h3>
-          <div className="flex flex-wrap gap-2">
-            {product.colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`px-4 py-2 rounded-lg border ${
-                  selectedColor === color
-                    ? 'border-pink-500 bg-pink-50 text-pink-600'
-                    : 'border-gray-300 text-gray-600'
-                }`}
-              >
-                {color}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Add to Cart Button */}
-        <Button 
-          onClick={handleAddToCart}
-          className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-full"
-        >
-          <ShoppingCart className="w-5 h-5 mr-2" />
-          Add to Cart
-        </Button>
-      </div>
+      {/* Add to Cart Button */}
+      <AddToCartButton onAddToCart={handleAddToCart} />
 
       <BottomNavigation />
     </div>
