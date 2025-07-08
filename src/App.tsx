@@ -16,6 +16,7 @@ import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import ShoppingBag from "./pages/ShoppingBag";
 import Checkout from "./pages/Checkout";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/cart" element={<ShoppingBag />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
