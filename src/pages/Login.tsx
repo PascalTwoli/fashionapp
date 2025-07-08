@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,25 +13,34 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await login(email, password);
+    
+    const { error } = await login(email, password);
+    
+    if (error) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } else {
       toast({
         title: "Welcome back!",
         description: "You've been successfully logged in.",
       });
       navigate('/');
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -48,11 +57,11 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <Label htmlFor="email">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Type Username Here"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1"
@@ -66,7 +75,7 @@ const Login = () => {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Type Password Here"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pr-10"
@@ -89,15 +98,6 @@ const Login = () => {
           >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
-
-          <div className="flex justify-between text-sm">
-            <Link to="/forgot-password" className="text-pink-500">
-              Forgot password?
-            </Link>
-            <Link to="/reset" className="text-pink-500">
-              Reset Here
-            </Link>
-          </div>
 
           <div className="text-center pt-6">
             <p className="text-gray-600">Don't have an account?</p>

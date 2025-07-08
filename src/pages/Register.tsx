@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,16 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register, isLoading } = useAuth();
+  const { register, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,19 +39,20 @@ const Register = () => {
       return;
     }
 
-    try {
-      await register(name, email, password);
-      toast({
-        title: "Account created!",
-        description: "Welcome to FashionUp! Your account has been created successfully.",
-      });
-      navigate('/');
-    } catch (error) {
+    const { error } = await register(name, email, password);
+    
+    if (error) {
       toast({
         title: "Registration failed",
-        description: "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
+    } else {
+      toast({
+        title: "Account created!",
+        description: "Welcome to FashionUp! Please check your email to verify your account.",
+      });
+      // Don't navigate immediately - let the user verify their email first
     }
   };
 
