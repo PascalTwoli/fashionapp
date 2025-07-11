@@ -48,7 +48,7 @@ const OrderManagement = () => {
         .from('orders')
         .select(`
           *,
-          profiles (name),
+          profiles!user_id (name),
           order_items (
             *,
             products (name, image_url)
