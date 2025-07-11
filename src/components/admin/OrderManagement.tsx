@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +26,7 @@ interface Order {
   total_amount: number | null;
   created_at: string;
   updated_at: string;
-  profiles: {
-    name: string;
-  };
+  customer_name?: string;
   order_items: OrderItem[];
 }
 
@@ -44,11 +41,11 @@ const OrderManagement = () => {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      // First, fetch orders with order_items and products
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
           *,
-          profiles (name),
           order_items (
             *,
             products (name, image_url)
@@ -56,13 +53,30 @@ const OrderManagement = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (ordersError) {
+        console.error('Orders fetch error:', ordersError);
+        throw ordersError;
       }
-      
-      console.log('Fetched orders data:', data);
-      setOrders(data || []);
+
+      // Then fetch profiles for each unique user_id
+      const userIds = [...new Set(ordersData?.map(order => order.user_id) || [])];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Profiles fetch error:', profilesError);
+      }
+
+      // Combine the data
+      const ordersWithProfiles = ordersData?.map(order => ({
+        ...order,
+        customer_name: profilesData?.find(profile => profile.id === order.user_id)?.name || 'Unknown Customer'
+      })) || [];
+
+      console.log('Fetched orders with profiles:', ordersWithProfiles);
+      setOrders(ordersWithProfiles);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -132,7 +146,7 @@ const OrderManagement = () => {
                 <div>
                   <CardTitle className="text-lg">Order #{order.id.slice(0, 8)}</CardTitle>
                   <CardDescription>
-                    Customer: {order.profiles?.name || 'Unknown'} • 
+                    Customer: {order.customer_name} • 
                     Created: {new Date(order.created_at).toLocaleDateString()}
                   </CardDescription>
                 </div>
