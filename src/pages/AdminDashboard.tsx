@@ -77,7 +77,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-secondary p-6">
-      <p className="text-muted-foreground">Loading...</p>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
