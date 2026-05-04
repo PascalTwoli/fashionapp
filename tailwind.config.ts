@@ -18,6 +18,21 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				display: ['"Playfair Display"', 'Georgia', 'serif'],
+			},
+			boxShadow: {
+				card: 'var(--shadow-card)',
+				elevated: 'var(--shadow-elevated)',
+			},
+			backgroundImage: {
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-overlay': 'var(--gradient-overlay)',
+			},
+			transitionTimingFunction: {
+				smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

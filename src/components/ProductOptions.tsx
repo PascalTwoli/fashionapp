@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ProductOptionsProps {
   sizes: string[];
@@ -10,29 +10,34 @@ interface ProductOptionsProps {
   onColorChange: (color: string) => void;
 }
 
-const ProductOptions = ({ 
-  sizes, 
-  colors, 
-  selectedSize, 
-  selectedColor, 
-  onSizeChange, 
-  onColorChange 
+const ProductOptions = ({
+  sizes,
+  colors,
+  selectedSize,
+  selectedColor,
+  onSizeChange,
+  onColorChange,
 }: ProductOptionsProps) => {
   return (
-    <div className="px-4">
-      {/* Size Selection */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">Size</h3>
-        <div className="flex flex-wrap gap-2">
+    <div className="px-5 mt-8 space-y-6">
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-eyebrow">Size</h3>
+          <button className="text-xs underline text-muted-foreground hover:text-foreground">
+            Size guide
+          </button>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
           {sizes.map((size) => (
             <button
               key={size}
               onClick={() => onSizeChange(size)}
-              className={`px-4 py-2 rounded-lg border ${
+              className={cn(
+                'h-11 text-sm font-medium border transition-colors',
                 selectedSize === size
-                  ? 'border-pink-500 bg-pink-50 text-pink-600'
-                  : 'border-gray-300 text-gray-600'
-              }`}
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border text-foreground hover:border-foreground',
+              )}
             >
               {size}
             </button>
@@ -40,19 +45,21 @@ const ProductOptions = ({
         </div>
       </div>
 
-      {/* Color Selection */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-3">Color</h3>
+      <div>
+        <h3 className="text-eyebrow mb-3">
+          Color {selectedColor && <span className="normal-case tracking-normal text-foreground">— {selectedColor}</span>}
+        </h3>
         <div className="flex flex-wrap gap-2">
           {colors.map((color) => (
             <button
               key={color}
               onClick={() => onColorChange(color)}
-              className={`px-4 py-2 rounded-lg border ${
+              className={cn(
+                'px-4 h-11 text-sm border transition-colors',
                 selectedColor === color
-                  ? 'border-pink-500 bg-pink-50 text-pink-600'
-                  : 'border-gray-300 text-gray-600'
-              }`}
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border text-foreground hover:border-foreground',
+              )}
             >
               {color}
             </button>

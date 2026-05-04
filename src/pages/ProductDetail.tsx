@@ -1,112 +1,39 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Truck, RotateCcw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 import BottomNavigation from '@/components/BottomNavigation';
 import ProductImages from '@/components/ProductImages';
 import ProductInfo from '@/components/ProductInfo';
 import ProductOptions from '@/components/ProductOptions';
 import AddToCartButton from '@/components/AddToCartButton';
+import ProductCard from '@/components/ProductCard';
+import { products } from '@/data/products';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { toast } = useToast();
 
-  // Mock product data - in a real app, this would come from an API
-  const products = [
-    {
-      id: '1',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 25.15,
-      originalPrice: 30.15,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop',
-      category: 'Fashion',
-      description: 'A stylish and comfortable fashion piece perfect for any occasion. Made with high-quality materials and modern design.',
-      rating: 4.5,
-      reviews: 128,
-      sizes: ['XS', 'S', 'M', 'L', 'XL'],
-      colors: ['Black', 'White', 'Pink', 'Blue'],
-      images: [
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=300&fit=crop'
-      ]
-    },
-    {
-      id: '2',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 18.50,
-      originalPrice: 25.13,
-      image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop',
-      category: 'Jacket',
-      description: 'Trendy jacket perfect for casual and formal occasions. Features modern cut and premium fabric.',
-      rating: 4.2,
-      reviews: 89,
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: ['Navy', 'Black', 'Gray'],
-      images: [
-        'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1520975954732-35dd22299614?w=400&h=300&fit=crop'
-      ]
-    },
-    {
-      id: '3',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 20.15,
-      originalPrice: 40.55,
-      image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=300&fit=crop',
-      category: 'Fashion',
-      description: 'Elegant and sophisticated design that combines comfort with style. Perfect for special occasions.',
-      rating: 4.7,
-      reviews: 203,
-      sizes: ['XS', 'S', 'M', 'L'],
-      colors: ['Red', 'Black', 'White'],
-      images: [
-        'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=300&fit=crop'
-      ]
-    },
-    {
-      id: '4',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 25.15,
-      originalPrice: 30.15,
-      image: 'https://images.unsplash.com/photo-1503341960582-b45751874cf0?w=400&h=300&fit=crop',
-      category: 'Jacket',
-      description: 'Premium jacket with exceptional quality and timeless design. A must-have for your wardrobe.',
-      rating: 4.6,
-      reviews: 156,
-      sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-      colors: ['Brown', 'Black', 'Tan'],
-      images: [
-        'https://images.unsplash.com/photo-1503341960582-b45751874cf0?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?w=400&h=300&fit=crop'
-      ]
-    }
-  ];
+  const product = products.find((p) => p.id === id);
 
-  const product = products.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = React.useState('');
   const [selectedColor, setSelectedColor] = React.useState('');
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-background pb-20">
         <div className="p-4">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
-          <div className="text-center text-gray-500 mt-20">
+          <div className="text-center text-muted-foreground mt-20">
             <p>Product not found</p>
           </div>
         </div>
@@ -116,54 +43,64 @@ const ProductDetail = () => {
   }
 
   const isWishlisted = isInWishlist(product.id);
-
   const handleWishlistToggle = () => {
-    if (isWishlisted) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist(product);
-    }
+    if (isWishlisted) removeFromWishlist(product.id);
+    else addToWishlist(product);
   };
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
-      alert('Please select both size and color before adding to cart');
+      toast({
+        title: 'Select size & color',
+        description: 'Please choose a size and color before adding to bag.',
+        variant: 'destructive',
+      });
       return;
     }
-
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
       size: selectedSize,
-      color: selectedColor
+      color: selectedColor,
     });
+    toast({ title: 'Added to bag', description: `${product.name} (${selectedSize}, ${selectedColor})` });
   };
 
+  const related = products.filter((p) => p.id !== product.id).slice(0, 4);
+
   return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+    <div className="min-h-screen bg-background pb-40">
+      {/* Floating header */}
+      <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-3 bg-background/80 backdrop-blur-md">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="bg-background/80 rounded-full">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Product Detail</h1>
-        <Button variant="ghost" size="icon" onClick={handleWishlistToggle}>
-          <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
-        </Button>
-      </div>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" className="bg-background/80 rounded-full" aria-label="Share">
+            <Share2 className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleWishlistToggle}
+            className="bg-background/80 rounded-full"
+            aria-label="Wishlist"
+          >
+            <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-accent text-accent' : ''}`} />
+          </Button>
+        </div>
+      </header>
 
-      {/* Product Images */}
-      <ProductImages 
+      <ProductImages
         images={product.images}
         productName={product.name}
         currentImageIndex={currentImageIndex}
         onImageChange={setCurrentImageIndex}
       />
 
-      {/* Product Info */}
-      <ProductInfo 
+      <ProductInfo
         category={product.category}
         rating={product.rating}
         reviews={product.reviews}
@@ -174,8 +111,7 @@ const ProductDetail = () => {
         description={product.description}
       />
 
-      {/* Product Options */}
-      <ProductOptions 
+      <ProductOptions
         sizes={product.sizes}
         colors={product.colors}
         selectedSize={selectedSize}
@@ -184,9 +120,39 @@ const ProductDetail = () => {
         onColorChange={setSelectedColor}
       />
 
-      {/* Add to Cart Button */}
-      <AddToCartButton onAddToCart={handleAddToCart} />
+      {/* Service highlights */}
+      <section className="mt-10 mx-4 border-t border-border divide-y divide-border">
+        {[
+          { icon: Truck, label: 'Free shipping over $100', sub: 'Delivered in 2–4 business days' },
+          { icon: RotateCcw, label: 'Free returns within 30 days', sub: 'No questions asked' },
+          { icon: Shield, label: 'Secure checkout', sub: 'Encrypted & protected' },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-4 py-4">
+            <item.icon className="w-5 h-5 text-foreground shrink-0" strokeWidth={1.5} />
+            <div>
+              <p className="text-sm font-medium">{item.label}</p>
+              <p className="text-xs text-muted-foreground">{item.sub}</p>
+            </div>
+          </div>
+        ))}
+      </section>
 
+      {/* Related */}
+      <section className="mt-12 px-4">
+        <p className="text-eyebrow">You may also like</p>
+        <h3 className="font-display text-xl mt-1 mb-5">Complete the look</h3>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+          {related.map((p) => (
+            <ProductCard
+              key={p.id}
+              {...p}
+              onProductClick={(pid) => navigate(`/product/${pid}`)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <AddToCartButton onAddToCart={handleAddToCart} />
       <BottomNavigation />
     </div>
   );

@@ -1,122 +1,107 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Menu } from 'lucide-react';
+import { Search, ShoppingBag, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import ProductCard from '@/components/ProductCard';
 import BottomNavigation from '@/components/BottomNavigation';
 import Logo from '@/components/Logo';
+import { products, categories, collections } from '@/data/products';
+import { useCart } from '@/contexts/CartContext';
 
 const Home = () => {
   const navigate = useNavigate();
-
-  const categories = ['All', 'Men', 'Fashion', 'Women'];
-  const [activeCategory, setActiveCategory] = React.useState('All');
-
-  const products = [
-    {
-      id: '1',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 25.15,
-      originalPrice: 30.15,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop',
-      category: 'Fashion'
-    },
-    {
-      id: '2',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 18.50,
-      originalPrice: 25.13,
-      image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop',
-      category: 'Jacket'
-    },
-    {
-      id: '3',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 20.15,
-      originalPrice: 40.55,
-      image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=300&fit=crop',
-      category: 'Fashion'
-    },
-    {
-      id: '4',
-      name: 'Fashion Design',
-      brand: 'FashionUp',
-      price: 25.15,
-      originalPrice: 30.15,
-      image: 'https://images.unsplash.com/photo-1503341960582-b45751874cf0?w=400&h=300&fit=crop',
-      category: 'Jacket'
-    },
-  ];
+  const { itemCount } = useCart();
+  const [activeCategory, setActiveCategory] = useState('New In');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white px-4 py-3 flex items-center justify-between z-40 shadow-sm">
-        <Button variant="ghost" size="icon">
-          <Menu className="w-5 h-5" />
-        </Button>
-        
-        <Logo size="md" />
-
-        <Button variant="ghost" size="icon">
-          <Search className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Scrollable Content Area */}
-      <div className="pt-16 pb-20 overflow-y-auto">
-        {/* Hero Banner */}
-        <div className="mx-4 mt-4 bg-gradient-to-r from-pink-100 to-pink-200 rounded-2xl p-6 relative overflow-hidden">
-          <div className="relative z-10">
-            <p className="text-pink-600 text-sm font-medium">FASHION DAY</p>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">35% Off</h2>
-            <p className="text-gray-600 text-sm mt-1">Discover our latest Products</p>
-            <Button className="bg-pink-500 hover:bg-pink-600 text-white mt-4 rounded-full px-6">
-              Shop Now
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border z-40">
+        <div className="flex items-center justify-between px-4 h-14">
+          <Logo size="md" />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" aria-label="Search" onClick={() => navigate('/categories')}>
+              <Search className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Bag" onClick={() => navigate('/cart')} className="relative">
+              <ShoppingBag className="w-5 h-5" />
+              {itemCount > 0 && (
+                <span className="absolute top-1 right-1 bg-accent text-accent-foreground text-[10px] rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center font-medium">
+                  {itemCount}
+                </span>
+              )}
             </Button>
           </div>
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-            <img 
-              src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=150&h=150&fit=crop&crop=face" 
-              alt="Fashion model"
-              className="w-24 h-24 object-cover rounded-full"
-            />
-          </div>
         </div>
+      </header>
 
-        {/* Category Tabs */}
-        <div className="px-4 mt-6">
-          <div className="flex space-x-1 bg-gray-100 rounded-full p-1">
-            {categories.map((category) => (
+      <main className="pt-14 pb-24">
+        {/* Hero */}
+        <section className="relative h-[70vh] min-h-[480px] overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80"
+            alt="Spring 2026 Collection"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-overlay" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 text-background">
+            <p className="text-[11px] font-medium uppercase tracking-display opacity-90">
+              Spring / Summer 2026
+            </p>
+            <h1 className="font-display text-4xl leading-tight mt-2 max-w-[280px]">
+              Effortless silhouettes, refined materials.
+            </h1>
+            <Button
+              onClick={() => navigate('/categories')}
+              className="mt-5 h-11 px-6 bg-background text-foreground hover:bg-background/90 rounded-none text-xs tracking-wider uppercase"
+            >
+              Shop the Edit
+            </Button>
+          </div>
+        </section>
+
+        {/* Category tabs */}
+        <section className="border-b border-border">
+          <div className="flex overflow-x-auto scrollbar-none px-4">
+            {categories.map((cat) => (
               <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors ${
-                  activeCategory === category
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600'
+                key={cat.slug}
+                onClick={() => setActiveCategory(cat.name)}
+                className={`relative shrink-0 px-4 py-4 text-xs uppercase tracking-wider transition-colors ${
+                  activeCategory === cat.name
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {category}
+                {cat.name}
+                {activeCategory === cat.name && (
+                  <span className="absolute bottom-0 left-4 right-4 h-px bg-foreground" />
+                )}
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Most Popular Section */}
-        <div className="px-4 mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Most Popular</h3>
-            <button className="text-pink-500 text-sm">See more</button>
+        {/* Featured grid */}
+        <section className="px-4 pt-8">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <p className="text-eyebrow">Curated</p>
+              <h2 className="font-display text-2xl mt-1">Most Loved</h2>
+            </div>
+            <button
+              onClick={() => navigate('/categories')}
+              className="text-xs uppercase tracking-wider underline underline-offset-4 text-muted-foreground hover:text-foreground"
+            >
+              View all
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {products.map((product) => (
+          <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+            {products.slice(0, 4).map((product) => (
               <ProductCard
                 key={product.id}
                 {...product}
@@ -124,8 +109,58 @@ const Home = () => {
               />
             ))}
           </div>
-        </div>
-      </div>
+        </section>
+
+        {/* Editorial collections */}
+        <section className="mt-14 px-4">
+          <p className="text-eyebrow">Collections</p>
+          <h2 className="font-display text-2xl mt-1 mb-6">Shop by edit</h2>
+          <div className="space-y-3">
+            {collections.map((c) => (
+              <button
+                key={c.title}
+                onClick={() => navigate('/categories')}
+                className="relative block w-full h-56 overflow-hidden hover-zoom group"
+              >
+                <img src={c.image} alt={c.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-overlay" />
+                <div className="absolute bottom-5 left-5 text-left text-background">
+                  <p className="text-[11px] uppercase tracking-display opacity-90">{c.subtitle}</p>
+                  <h3 className="font-display text-2xl mt-1">{c.title}</h3>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Just in */}
+        <section className="mt-14 px-4">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <p className="text-eyebrow">Just landed</p>
+              <h2 className="font-display text-2xl mt-1">New this week</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+            {products.slice(2, 6).map((product) => (
+              <ProductCard
+                key={product.id}
+                {...product}
+                onProductClick={(id) => navigate(`/product/${id}`)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Footer note */}
+        <section className="mt-16 mx-4 p-6 bg-secondary text-center">
+          <p className="text-eyebrow">Member benefits</p>
+          <h3 className="font-display text-xl mt-2">Free shipping over $100</h3>
+          <p className="text-sm text-muted-foreground mt-2">
+            Complimentary returns within 30 days.
+          </p>
+        </section>
+      </main>
 
       <BottomNavigation />
     </div>

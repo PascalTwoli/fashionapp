@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,64 +15,75 @@ interface ProductCardProps {
   className?: string;
 }
 
-const ProductCard = ({ 
-  id, 
-  name, 
-  brand, 
-  price, 
-  originalPrice, 
-  image, 
+const ProductCard = ({
+  id,
+  name,
+  brand,
+  price,
+  originalPrice,
+  image,
   category,
   onProductClick,
-  className 
+  className,
 }: ProductCardProps) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const isWishlisted = isInWishlist(id);
+  const discount = originalPrice
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     const product = { id, name, brand, price, originalPrice, image, category };
-    
-    if (isWishlisted) {
-      removeFromWishlist(id);
-    } else {
-      addToWishlist(product);
-    }
+    if (isWishlisted) removeFromWishlist(id);
+    else addToWishlist(product);
   };
 
   return (
-    <div 
-      className={cn("bg-white rounded-lg overflow-hidden cursor-pointer", className)}
+    <div
+      className={cn('group cursor-pointer', className)}
       onClick={() => onProductClick(id)}
     >
-      <div className="relative">
-        <img 
-          src={image} 
+      <div className="relative overflow-hidden bg-muted aspect-[3/4] hover-zoom">
+        <img
+          src={image}
           alt={name}
-          className="w-full h-48 object-cover"
+          loading="lazy"
+          className="w-full h-full object-cover"
         />
+
+        {discount > 0 && (
+          <span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-medium tracking-wider uppercase px-2 py-1">
+            -{discount}%
+          </span>
+        )}
+
         <button
           onClick={handleWishlistToggle}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm"
+          aria-label="Toggle wishlist"
+          className="absolute top-3 right-3 p-2 rounded-full bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+          style={{ opacity: isWishlisted ? 1 : undefined }}
         >
-          <Heart 
+          <Heart
             className={cn(
-              "w-4 h-4",
-              isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"
+              'w-4 h-4',
+              isWishlisted ? 'fill-accent text-accent' : 'text-foreground',
             )}
           />
         </button>
       </div>
-      
-      <div className="p-3">
-        <p className="text-xs text-gray-500 uppercase">{category}</p>
-        <h3 className="font-medium text-gray-900 text-sm mt-1">{name}</h3>
-        <p className="text-xs text-gray-600">{brand}</p>
-        
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-pink-500 font-semibold">${price.toFixed(2)}</span>
+
+      <div className="pt-3 pb-1">
+        <p className="text-eyebrow">{brand}</p>
+        <h3 className="text-sm font-medium text-foreground mt-1 line-clamp-1">
+          {name}
+        </h3>
+        <div className="flex items-baseline gap-2 mt-1.5">
+          <span className="text-sm font-semibold text-foreground">
+            ${price.toFixed(2)}
+          </span>
           {originalPrice && (
-            <span className="text-gray-400 text-sm line-through">
+            <span className="text-xs text-muted-foreground line-through">
               ${originalPrice.toFixed(2)}
             </span>
           )}

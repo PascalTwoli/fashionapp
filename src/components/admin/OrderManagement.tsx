@@ -175,7 +175,7 @@ const OrderManagement = () => {
             <CardContent>
               <div className="space-y-3">
                 {order.order_items?.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                  <div key={item.id} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
                     {item.products?.image_url && (
                       <img 
                         src={item.products.image_url} 

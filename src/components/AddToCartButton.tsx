@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AddToCartButtonProps {
@@ -9,13 +7,12 @@ interface AddToCartButtonProps {
 
 const AddToCartButton = ({ onAddToCart }: AddToCartButtonProps) => {
   return (
-    <div className="px-4">
-      <Button 
+    <div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-background/95 backdrop-blur-md border-t border-border z-40">
+      <Button
         onClick={onAddToCart}
-        className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-full"
+        className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-sm tracking-wider uppercase font-medium"
       >
-        <ShoppingCart className="w-5 h-5 mr-2" />
-        Add to Cart
+        Add to bag
       </Button>
     </div>
   );
