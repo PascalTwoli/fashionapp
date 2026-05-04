@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,8 +5,19 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Save, X, Settings } from 'lucide-react';
+import {
+  Edit,
+  Save,
+  X,
+  Settings,
+  ShoppingBag,
+  Heart,
+  MapPin,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+  ChevronRight,
+} from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,22 +31,16 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: profile?.name || '',
-    avatar: profile?.avatar || ''
+    avatar: profile?.avatar || '',
   });
 
-  // Redirect to login if not authenticated
   React.useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/login');
-    }
+    if (!isLoading && !user) navigate('/login');
   }, [user, isLoading, navigate]);
 
   React.useEffect(() => {
     if (profile) {
-      setFormData({
-        name: profile.name || '',
-        avatar: profile.avatar || ''
-      });
+      setFormData({ name: profile.name || '', avatar: profile.avatar || '' });
     }
   }, [profile]);
 
@@ -47,160 +51,159 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!user) return;
-    
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: formData.name,
-          avatar: formData.avatar || null
-        })
+        .update({ name: formData.name, avatar: formData.avatar || null })
         .eq('id', user.id);
-
       if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-      
+      toast({ title: 'Profile updated' });
       setIsEditing(false);
-      // The profile will be automatically updated through the auth context
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+    } catch (e) {
+      toast({ title: 'Update failed', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      name: profile?.name || '',
-      avatar: profile?.avatar || ''
-    });
-    setIsEditing(false);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-b-2 border-pink-500 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-6 w-6 border-2 border-foreground border-t-transparent rounded-full" />
       </div>
     );
   }
+  if (!user) return null;
 
-  if (!user) {
-    return null; // Will redirect to login
-  }
+  const menuItems = [
+    { icon: ShoppingBag, label: 'Orders', onClick: () => {} },
+    { icon: Heart, label: 'Saved items', onClick: () => navigate('/wishlist') },
+    { icon: MapPin, label: 'Addresses', onClick: () => {} },
+    { icon: CreditCard, label: 'Payment methods', onClick: () => {} },
+    { icon: HelpCircle, label: 'Help & support', onClick: () => {} },
+  ];
+
+  const initials = (profile?.name || user.email || 'U')
+    .split(' ')
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="p-4 max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+    <div className="min-h-screen bg-background pb-24">
+      <header className="border-b border-border">
+        <div className="flex items-center justify-between p-4">
+          <h1 className="font-display text-2xl">Account</h1>
           {isAdmin && (
-            <Button variant="outline" onClick={() => navigate('/admin')}>
-              <Settings className="w-4 h-4 mr-2" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              className="rounded-none text-xs uppercase tracking-wider"
+            >
+              <Settings className="w-3.5 h-3.5 mr-2" />
               Admin
             </Button>
           )}
         </div>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Personal Information</CardTitle>
-              {!isEditing && (
-                <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center mb-6">
-              {(isEditing ? formData.avatar : profile?.avatar) && (
-                <img 
-                  src={isEditing ? formData.avatar : profile?.avatar || ''} 
-                  alt={isEditing ? formData.name : profile?.name || 'User'}
-                  className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
-                />
-              )}
-              {isEditing ? (
-                <div className="space-y-2">
-                  <Label htmlFor="avatar">Avatar URL</Label>
-                  <Input
-                    id="avatar"
-                    type="url"
-                    placeholder="Enter image URL"
-                    value={formData.avatar}
-                    onChange={(e) => setFormData({...formData, avatar: e.target.value})}
-                  />
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-xl font-semibold">{profile?.name || 'User'}</h2>
-                  <p className="text-gray-600">{user.email}</p>
-                </>
-              )}
-            </div>
-            
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={isSaving}
-                    className="flex-1"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCancel}
-                    disabled={isSaving}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-4">
-                  Member since {new Date(profile?.created_at || '').toLocaleDateString()}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      </header>
 
-        <Card>
-          <CardContent className="pt-6">
-            <Button onClick={handleLogout} variant="outline" className="w-full">
-              Logout
+      {/* Profile header */}
+      <section className="px-4 py-6 flex items-center gap-4">
+        {formData.avatar || profile?.avatar ? (
+          <img
+            src={isEditing ? formData.avatar : profile?.avatar || ''}
+            alt={profile?.name || 'Avatar'}
+            className="w-16 h-16 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center font-display text-xl">
+            {initials}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-medium truncate">{profile?.name || 'Welcome'}</h2>
+          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        </div>
+        {!isEditing && (
+          <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+            <Edit className="w-4 h-4" />
+          </Button>
+        )}
+      </section>
+
+      {isEditing && (
+        <section className="px-4 pb-6 space-y-4 border-b border-border">
+          <div>
+            <Label htmlFor="name" className="text-xs uppercase tracking-wider">Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="mt-1.5 rounded-none h-11"
+            />
+          </div>
+          <div>
+            <Label htmlFor="avatar" className="text-xs uppercase tracking-wider">Avatar URL</Label>
+            <Input
+              id="avatar"
+              value={formData.avatar}
+              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+              className="mt-1.5 rounded-none h-11"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 h-11 bg-foreground text-background rounded-none text-xs uppercase tracking-wider"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? 'Saving…' : 'Save'}
             </Button>
-          </CardContent>
-        </Card>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              className="h-11 rounded-none"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* Menu */}
+      <ul className="divide-y divide-border border-t border-border">
+        {menuItems.map((item) => (
+          <li key={item.label}>
+            <button
+              onClick={item.onClick}
+              className="w-full flex items-center gap-4 px-4 py-4 text-left hover:bg-secondary transition-colors"
+            >
+              <item.icon className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+              <span className="flex-1 text-sm">{item.label}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="px-4 mt-8">
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          className="w-full h-11 rounded-none text-xs uppercase tracking-wider"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign out
+        </Button>
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString()}
+        </p>
       </div>
+
       <BottomNavigation />
     </div>
   );

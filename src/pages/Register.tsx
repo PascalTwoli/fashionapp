@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
@@ -15,146 +14,120 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
+    if (user) navigate('/');
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (password !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
+      toast({ title: "Passwords don't match", variant: 'destructive' });
       return;
     }
-
     const { error } = await register(name, email, password);
-    
     if (error) {
-      toast({
-        title: "Registration failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: 'Registration failed', description: error.message, variant: 'destructive' });
     } else {
-      toast({
-        title: "Account created!",
-        description: "Welcome to FashionUp! Please check your email to verify your account.",
-      });
-      // Don't navigate immediately - let the user verify their email first
+      toast({ title: 'Account created', description: 'Welcome to FashionUp.' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="hidden md:block fixed inset-y-0 right-0 w-1/2">
+        <img
+          src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=1200&q=80"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-6 md:mr-[50%]">
+        <div className="w-full max-w-sm">
+          <div className="mb-10">
             <Logo size="lg" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-pink-500 mt-1">Join FashionUp today!</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1"
-              required
-            />
+            <h1 className="font-display text-3xl mt-8">Create account</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Join FashionUp for early access and member benefits.
+            </p>
           </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <div className="relative mt-1">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <Label htmlFor="name" className="text-xs uppercase tracking-wider">Full name</Label>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1.5 rounded-none h-11"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative mt-1">
+            <div>
+              <Label htmlFor="email" className="text-xs uppercase tracking-wider">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1.5 rounded-none h-11"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="password" className="text-xs uppercase tracking-wider">Password</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10 rounded-none h-11"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider">
+                Confirm password
+              </Label>
               <Input
                 id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
+                type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pr-10"
+                className="mt-1.5 rounded-none h-11"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl"
-            disabled={isLoading}
-          >
-            {isLoading ? "Creating Account..." : "Register"}
-          </Button>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-xs uppercase tracking-wider"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Creating…' : 'Create account'}
+            </Button>
 
-          <div className="text-center pt-6">
-            <p className="text-gray-600">Already have an account?</p>
-            <Link to="/login">
-              <Button variant="outline" className="w-full mt-2 rounded-xl">
-                Login here
-              </Button>
-            </Link>
-          </div>
-        </form>
+            <p className="text-center text-sm text-muted-foreground pt-4">
+              Already have an account?{' '}
+              <Link to="/login" className="text-foreground underline underline-offset-4">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
