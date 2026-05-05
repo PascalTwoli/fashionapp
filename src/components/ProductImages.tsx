@@ -15,8 +15,8 @@ const ProductImages = ({
   onImageChange,
 }: ProductImagesProps) => {
   return (
-    <div className="relative bg-muted">
-      <div className="aspect-[3/4] overflow-hidden">
+    <div className="relative bg-muted lg:h-[calc(100vh-4rem)]">
+      <div className="aspect-[3/4] lg:aspect-auto lg:h-full overflow-hidden">
         <img
           src={images[currentImageIndex]}
           alt={productName}
