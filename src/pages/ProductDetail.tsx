@@ -93,32 +93,38 @@ const ProductDetail = () => {
         </div>
       </header>
 
-      <ProductImages
-        images={product.images}
-        productName={product.name}
-        currentImageIndex={currentImageIndex}
-        onImageChange={setCurrentImageIndex}
-      />
+      <div className="pt-14 lg:pt-16 lg:grid lg:grid-cols-2 lg:gap-8 lg:max-w-7xl lg:mx-auto">
+        <div className="lg:sticky lg:top-16 lg:self-start lg:px-4">
+          <ProductImages
+            images={product.images}
+            productName={product.name}
+            currentImageIndex={currentImageIndex}
+            onImageChange={setCurrentImageIndex}
+          />
+        </div>
 
-      <ProductInfo
-        category={product.category}
-        rating={product.rating}
-        reviews={product.reviews}
-        name={product.name}
-        brand={product.brand}
-        price={product.price}
-        originalPrice={product.originalPrice}
-        description={product.description}
-      />
+        <div className="lg:py-6 lg:max-w-xl">
+          <ProductInfo
+            category={product.category}
+            rating={product.rating}
+            reviews={product.reviews}
+            name={product.name}
+            brand={product.brand}
+            price={product.price}
+            originalPrice={product.originalPrice}
+            description={product.description}
+          />
 
-      <ProductOptions
-        sizes={product.sizes}
-        colors={product.colors}
-        selectedSize={selectedSize}
-        selectedColor={selectedColor}
-        onSizeChange={setSelectedSize}
-        onColorChange={setSelectedColor}
-      />
+          <ProductOptions
+            sizes={product.sizes}
+            colors={product.colors}
+            selectedSize={selectedSize}
+            selectedColor={selectedColor}
+            onSizeChange={setSelectedSize}
+            onColorChange={setSelectedColor}
+          />
+        </div>
+      </div>
 
       {/* Service highlights */}
       <section className="mt-10 mx-4 border-t border-border divide-y divide-border">
