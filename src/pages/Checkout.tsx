@@ -15,7 +15,7 @@ const Checkout = () => {
   const [step, setStep] = useState<'address' | 'payment' | 'success'>('address');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const shipping = total >= 100 || total === 0 ? 0 : 9;
+  const shipping = total >= 10000 || total === 0 ? 0 : 500;
   const grandTotal = total + shipping;
 
   if (items.length === 0 && step !== 'success') {
