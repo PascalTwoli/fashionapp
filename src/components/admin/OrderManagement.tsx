@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatKES } from '@/lib/format';
 
 interface OrderItem {
   id: string;
@@ -186,14 +187,14 @@ const OrderManagement = () => {
                     <div className="flex-1">
                       <h4 className="font-medium">{item.products?.name}</h4>
                       <div className="text-sm text-gray-600">
-                        Quantity: {item.quantity} • Price: ${item.price.toFixed(2)}
+                        Quantity: {item.quantity} • Price: {formatKES(item.price)}
                         {item.size && ` • Size: ${item.size}`}
                         {item.color && ` • Color: ${item.color}`}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatKES(item.price * item.quantity)}
                       </div>
                     </div>
                   </div>
@@ -202,7 +203,7 @@ const OrderManagement = () => {
                 {order.total_amount && (
                   <div className="flex justify-end pt-3 border-t">
                     <div className="text-lg font-bold">
-                      Total: ${order.total_amount.toFixed(2)}
+                      Total: {formatKES(order.total_amount)}
                     </div>
                   </div>
                 )}

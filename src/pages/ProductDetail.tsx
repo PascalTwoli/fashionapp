@@ -123,7 +123,7 @@ const ProductDetail = () => {
       {/* Service highlights */}
       <section className="mt-10 mx-4 border-t border-border divide-y divide-border">
         {[
-          { icon: Truck, label: 'Free shipping over $100', sub: 'Delivered in 2–4 business days' },
+          { icon: Truck, label: 'Free shipping over KES 10,000', sub: 'Delivered in 2–4 business days' },
           { icon: RotateCcw, label: 'Free returns within 30 days', sub: 'No questions asked' },
           { icon: Shield, label: 'Secure checkout', sub: 'Encrypted & protected' },
         ].map((item) => (
