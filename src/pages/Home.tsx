@@ -100,7 +100,7 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
             {products.slice(0, 4).map((product) => (
               <ProductCard
                 key={product.id}
@@ -141,7 +141,7 @@ const Home = () => {
               <h2 className="font-display text-2xl mt-1">New this week</h2>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
             {products.slice(2, 6).map((product) => (
               <ProductCard
                 key={product.id}

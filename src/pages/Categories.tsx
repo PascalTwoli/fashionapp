@@ -80,7 +80,7 @@ const Categories = () => {
             <p className="text-sm text-muted-foreground">No products match your search.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
             {filtered.map((p) => (
               <ProductCard
                 key={p.id}
