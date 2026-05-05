@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/contexts/WishlistContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import { formatKES } from '@/lib/format';
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -59,10 +60,10 @@ const Wishlist = () => {
                     {item.name}
                   </h3>
                   <div className="flex items-baseline gap-2 mt-1.5">
-                    <span className="text-sm font-semibold">${item.price.toFixed(2)}</span>
+                    <span className="text-sm font-semibold">{formatKES(item.price)}</span>
                     {item.originalPrice && (
                       <span className="text-xs text-muted-foreground line-through">
-                        ${item.originalPrice.toFixed(2)}
+                        {formatKES(item.originalPrice)}
                       </span>
                     )}
                   </div>

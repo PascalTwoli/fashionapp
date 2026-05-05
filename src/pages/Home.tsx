@@ -155,7 +155,7 @@ const Home = () => {
         {/* Footer note */}
         <section className="mt-16 mx-4 p-6 bg-secondary text-center">
           <p className="text-eyebrow">Member benefits</p>
-          <h3 className="font-display text-xl mt-2">Free shipping over $100</h3>
+          <h3 className="font-display text-xl mt-2">Free shipping over KES 10,000</h3>
           <p className="text-sm text-muted-foreground mt-2">
             Complimentary returns within 30 days.
           </p>

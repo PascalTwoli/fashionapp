@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatKES } from '@/lib/format';
 
 interface Product {
   id: string;
@@ -274,7 +275,7 @@ const ProductManagement = () => {
               <p className="text-sm text-gray-600 mb-2">{product.category}</p>
               <p className="text-sm text-gray-500 mb-2">{product.description}</p>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-bold text-foreground">${product.price}</span>
+                <span className="text-lg font-bold text-foreground">{formatKES(product.price)}</span>
                 <span className="text-sm text-gray-500">Stock: {product.stock_quantity || 0}</span>
               </div>
               <div className="flex gap-2">

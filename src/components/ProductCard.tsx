@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { formatKES } from '@/lib/format';
 
 interface ProductCardProps {
   id: string;
@@ -80,11 +81,11 @@ const ProductCard = ({
         </h3>
         <div className="flex items-baseline gap-2 mt-1.5">
           <span className="text-sm font-semibold text-foreground">
-            ${price.toFixed(2)}
+            {formatKES(price)}
           </span>
           {originalPrice && (
             <span className="text-xs text-muted-foreground line-through">
-              ${originalPrice.toFixed(2)}
+              {formatKES(originalPrice)}
             </span>
           )}
         </div>

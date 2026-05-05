@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star } from 'lucide-react';
+import { formatKES } from '@/lib/format';
 
 interface ProductInfoProps {
   category: string;
@@ -41,12 +42,12 @@ const ProductInfo = ({
 
       <div className="flex items-baseline gap-3 mt-4">
         <span className="text-2xl font-semibold text-foreground">
-          ${price.toFixed(2)}
+          {formatKES(price)}
         </span>
         {originalPrice && (
           <>
             <span className="text-base text-muted-foreground line-through">
-              ${originalPrice.toFixed(2)}
+              {formatKES(originalPrice)}
             </span>
             <span className="text-xs font-medium uppercase tracking-wider text-accent">
               {discount}% off

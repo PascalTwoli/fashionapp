@@ -4,12 +4,13 @@ import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useCart } from '@/contexts/CartContext';
+import { formatKES } from '@/lib/format';
 
 const ShoppingBagPage = () => {
   const navigate = useNavigate();
   const { items, updateQuantity, removeFromCart, total, itemCount } = useCart();
 
-  const shipping = total >= 100 || total === 0 ? 0 : 9;
+  const shipping = total >= 10000 || total === 0 ? 0 : 500;
   const grandTotal = total + shipping;
 
   return (
@@ -97,7 +98,7 @@ const ShoppingBagPage = () => {
                       </button>
                     </div>
                     <span className="text-sm font-semibold">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatKES(item.price * item.quantity)}
                     </span>
                   </div>
                 </div>
@@ -110,15 +111,15 @@ const ShoppingBagPage = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatKES(total)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                <span>{shipping === 0 ? 'Free' : formatKES(shipping)}</span>
               </div>
               <div className="flex justify-between pt-3 mt-2 border-t border-border text-base font-semibold">
                 <span>Total</span>
-                <span>${grandTotal.toFixed(2)}</span>
+                <span>{formatKES(grandTotal)}</span>
               </div>
             </div>
           </section>
@@ -129,7 +130,7 @@ const ShoppingBagPage = () => {
               onClick={() => navigate('/checkout')}
               className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-sm tracking-wider uppercase"
             >
-              Checkout · ${grandTotal.toFixed(2)}
+              Checkout · {formatKES(grandTotal)}
             </Button>
           </div>
         </>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { formatKES } from '@/lib/format';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const Checkout = () => {
   const [step, setStep] = useState<'address' | 'payment' | 'success'>('address');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const shipping = total >= 100 || total === 0 ? 0 : 9;
+  const shipping = total >= 10000 || total === 0 ? 0 : 500;
   const grandTotal = total + shipping;
 
   if (items.length === 0 && step !== 'success') {
@@ -167,15 +168,15 @@ const Checkout = () => {
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatKES(total)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'Free' : formatKES(shipping)}</span>
                 </div>
                 <div className="flex justify-between pt-2 mt-2 border-t border-border text-base font-semibold text-foreground">
                   <span>Total</span>
-                  <span>${grandTotal.toFixed(2)}</span>
+                  <span>{formatKES(grandTotal)}</span>
                 </div>
               </div>
             </section>
@@ -185,7 +186,7 @@ const Checkout = () => {
               disabled={isProcessing}
               className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-xs uppercase tracking-wider mt-4"
             >
-              {isProcessing ? 'Processing…' : `Pay $${grandTotal.toFixed(2)}`}
+              {isProcessing ? 'Processing…' : `Pay ${formatKES(grandTotal)}`}
             </Button>
           </form>
         )}
