@@ -20,8 +20,8 @@ export const products: Product[] = [
     id: '1',
     name: 'Oversized Wool Coat',
     brand: 'FashionUp Studio',
-    price: 189.0,
-    originalPrice: 249.0,
+    price: 24570,
+    originalPrice: 32370,
     image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=800&q=80',
     category: 'Outerwear',
     description:
