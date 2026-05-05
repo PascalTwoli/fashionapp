@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { formatKES } from '@/lib/format';
 
 interface ProductCardProps {
   id: string;
