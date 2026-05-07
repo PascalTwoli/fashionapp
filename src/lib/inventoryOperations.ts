@@ -107,7 +107,10 @@ export const reduceVariantStock = async (
 			.maybeSingle();
 
 		if (fetchError) {
-			return { success: false, error: `Failed to fetch variant: ${fetchError.message}` };
+			return {
+				success: false,
+				error: `Failed to fetch variant: ${fetchError.message}`,
+			};
 		}
 
 		if (!variant) {
@@ -123,7 +126,10 @@ export const reduceVariantStock = async (
 			.eq("id", variantId);
 
 		if (updateError) {
-			return { success: false, error: `Failed to update stock: ${updateError.message}` };
+			return {
+				success: false,
+				error: `Failed to update stock: ${updateError.message}`,
+			};
 		}
 
 		return { success: true };
@@ -166,7 +172,9 @@ export const reduceCartItemsStock = async (
 
 		const result = await reduceVariantStock(variantId, item.quantity);
 		if (!result.success) {
-			errors.push(`Failed to reduce stock for ${item.name}: ${result.error}`);
+			errors.push(
+				`Failed to reduce stock for ${item.name}: ${result.error}`,
+			);
 		}
 	}
 

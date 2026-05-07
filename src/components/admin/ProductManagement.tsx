@@ -264,7 +264,11 @@ const ProductManagement = () => {
 				stock_quantity: productDataWithoutVariants.stock_quantity || 0,
 				sizes: productDataWithoutVariants.sizes || [],
 				colors: productDataWithoutVariants.colors || [],
-				tags: productDataWithoutVariants.tags && productDataWithoutVariants.tags.length > 0 ? productDataWithoutVariants.tags : [],
+				tags:
+					productDataWithoutVariants.tags &&
+					productDataWithoutVariants.tags.length > 0
+						? productDataWithoutVariants.tags
+						: [],
 				description: productDataWithoutVariants.description || null,
 				status: productDataWithoutVariants.status,
 				is_featured: productDataWithoutVariants.is_featured || false,
@@ -272,8 +276,14 @@ const ProductManagement = () => {
 				image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null,
 			};
 
-			console.log("[handleSubmit] All form data received:", JSON.stringify(productDataWithoutVariants, null, 2));
-			console.log("[handleSubmit] Product data to save (explicit):", JSON.stringify(productData, null, 2));
+			console.log(
+				"[handleSubmit] All form data received:",
+				JSON.stringify(productDataWithoutVariants, null, 2),
+			);
+			console.log(
+				"[handleSubmit] Product data to save (explicit):",
+				JSON.stringify(productData, null, 2),
+			);
 
 			if (editingProduct) {
 				// Update product
@@ -350,13 +360,16 @@ const ProductManagement = () => {
 
 			resetForm();
 			await fetchProducts();
-			
+
 			// Invalidate product queries
 			await queryClient.invalidateQueries({ queryKey: ["products"] });
-			await queryClient.invalidateQueries({ queryKey: ["product-variants"] });
+			await queryClient.invalidateQueries({
+				queryKey: ["product-variants"],
+			});
 		} catch (error) {
 			console.error("Error saving product:", error);
-			const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+			const errorMsg =
+				error instanceof Error ? error.message : JSON.stringify(error);
 			console.error("Error details:", errorMsg);
 			toast({
 				title: "Error",

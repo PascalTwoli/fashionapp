@@ -23,20 +23,27 @@ const productSchema = z.object({
 	gender: z.enum(["men", "women", "unisex"]),
 	price: z.coerce.number().positive("Price must be positive"),
 	discount_price: z.coerce.number().positive().optional(),
-	stock_quantity: z.coerce.number().min(0, "Stock cannot be negative").optional(), // Legacy field for backward compatibility
+	stock_quantity: z.coerce
+		.number()
+		.min(0, "Stock cannot be negative")
+		.optional(), // Legacy field for backward compatibility
 	sizes: z.array(z.string()).min(1, "Add at least one size"),
 	colors: z.array(z.string()).min(1, "Add at least one color"),
 	tags: z.array(z.string()).optional(),
 	description: z.string().optional(),
 	status: z.enum(["active", "draft", "archived"]),
 	is_featured: z.boolean().default(false),
-	variants: z.array(z.object({
-		size: z.string().min(1, "Size required"),
-		color: z.string().min(1, "Color required"),
-		stock_quantity: z.coerce.number().min(0, "Stock must be >= 0"),
-		sku: z.string().optional(),
-		price_override: z.coerce.number().optional(),
-	})).optional(),
+	variants: z
+		.array(
+			z.object({
+				size: z.string().min(1, "Size required"),
+				color: z.string().min(1, "Color required"),
+				stock_quantity: z.coerce.number().min(0, "Stock must be >= 0"),
+				sku: z.string().optional(),
+				price_override: z.coerce.number().optional(),
+			}),
+		)
+		.optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -439,19 +446,37 @@ const ProductForm: React.FC<ProductFormProps> = ({
 						<table className="w-full text-xs sm:text-sm min-w-max">
 							<thead className="bg-gray-100 border-b">
 								<tr>
-									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">Size</th>
-									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">Color</th>
-									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">Stock</th>
-									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">SKU</th>
-									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">Price Ovr.</th>
-									<th className="px-2 sm:px-3 py-2 text-center whitespace-nowrap">Action</th>
+									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">
+										Size
+									</th>
+									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">
+										Color
+									</th>
+									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">
+										Stock
+									</th>
+									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">
+										SKU
+									</th>
+									<th className="px-2 sm:px-3 py-2 text-left whitespace-nowrap">
+										Price Ovr.
+									</th>
+									<th className="px-2 sm:px-3 py-2 text-center whitespace-nowrap">
+										Action
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{variants.map((variant, index) => (
-									<tr key={index} className="border-b hover:bg-gray-50">
-										<td className="px-2 sm:px-3 py-2">{variant.size}</td>
-										<td className="px-2 sm:px-3 py-2">{variant.color}</td>
+									<tr
+										key={index}
+										className="border-b hover:bg-gray-50">
+										<td className="px-2 sm:px-3 py-2">
+											{variant.size}
+										</td>
+										<td className="px-2 sm:px-3 py-2">
+											{variant.color}
+										</td>
 										<td className="px-2 sm:px-3 py-2">
 											<Input
 												type="number"
@@ -474,7 +499,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
 												placeholder="SKU"
 												value={variant.sku || ""}
 												onChange={(e) =>
-													updateVariant(index, "sku", e.target.value)
+													updateVariant(
+														index,
+														"sku",
+														e.target.value,
+													)
 												}
 												className="w-20 sm:w-32"
 												disabled={isLoading}

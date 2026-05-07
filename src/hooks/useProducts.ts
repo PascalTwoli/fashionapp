@@ -6,10 +6,12 @@ export interface Product {
 	name: string;
 	brand?: string;
 	price: number;
+	discount_price?: number;
 	originalPrice?: number;
 	image: string;
 	category?: string;
 	description?: string;
+	gender?: string;
 	rating?: number;
 	reviews?: number;
 	sizes?: string[];
@@ -42,11 +44,13 @@ export const useAllProducts = () => {
 					id: item.id,
 					name: item.name,
 					price: item.price,
+					discount_price: item.discount_price,
 					image: item.image_url || "",
 					category: item.category || "",
 					description: item.description || "",
 					// Default values for fields not yet in Supabase
 					brand: item.brand || "FashionUp",
+					gender: item.gender,
 					originalPrice: item.original_price,
 					rating: item.rating || 4.5,
 					reviews: item.reviews || 0,
@@ -96,10 +100,12 @@ export const useProductsByCategory = (category?: string) => {
 					id: item.id,
 					name: item.name,
 					price: item.price,
+					discount_price: item.discount_price,
 					image: item.image_url || "",
 					category: item.category || "",
 					description: item.description || "",
 					brand: item.brand || "FashionUp",
+					gender: item.gender,
 					originalPrice: item.original_price,
 					rating: item.rating || 4.5,
 					reviews: item.reviews || 0,
@@ -150,10 +156,12 @@ export const useProduct = (productId?: string) => {
 					id: data.id,
 					name: data.name,
 					price: data.price,
+					discount_price: data.discount_price,
 					image: data.image_url || "",
 					category: data.category || "",
 					description: data.description || "",
 					brand: data.brand || "FashionUp",
+					gender: data.gender,
 					originalPrice: data.original_price,
 					rating: data.rating || 4.5,
 					reviews: data.reviews || 0,
@@ -204,10 +212,12 @@ export const useSearchProducts = (query?: string) => {
 					id: item.id,
 					name: item.name,
 					price: item.price,
+					discount_price: item.discount_price,
 					image: item.image_url || "",
 					category: item.category || "",
 					description: item.description || "",
 					brand: item.brand || "FashionUp",
+					gender: item.gender,
 					originalPrice: item.original_price,
 					rating: item.rating || 4.5,
 					reviews: item.reviews || 0,
