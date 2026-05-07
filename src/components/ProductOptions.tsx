@@ -30,10 +30,9 @@ const ProductOptions = ({
 				<div className="flex items-center justify-between mb-3">
 					<h3 className="text-sm font-semibold">Size</h3>
 					{onSizeGuideClick && (
-						<button 
+						<button
 							onClick={onSizeGuideClick}
-							className="text-xs underline text-muted-foreground hover:text-foreground transition-colors"
-						>
+							className="text-xs underline text-muted-foreground hover:text-foreground transition-colors">
 							Size guide
 						</button>
 					)}
