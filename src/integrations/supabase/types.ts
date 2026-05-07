@@ -7,184 +7,23 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      order_items: {
-        Row: {
-          color: string | null
-          created_at: string
-          id: string
-          order_id: string
-          price: number
-          product_id: string
-          quantity: number
-          size: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          order_id: string
-          price: number
-          product_id: string
-          quantity?: number
-          size?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          order_id?: string
-          price?: number
-          product_id?: string
-          quantity?: number
-          size?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          created_at: string
-          id: string
-          status: string | null
-          total_amount: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          status?: string | null
-          total_amount?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          status?: string | null
-          total_amount?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      products: {
-        Row: {
-          category: string | null
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          name: string
-          price: number
-          stock_quantity: number | null
-          updated_at: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          price: number
-          stock_quantity?: number | null
-          updated_at?: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          price?: number
-          stock_quantity?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar: string | null
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          avatar?: string | null
-          created_at?: string
-          id: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          avatar?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -311,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
