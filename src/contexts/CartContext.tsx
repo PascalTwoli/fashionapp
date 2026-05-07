@@ -14,7 +14,7 @@ import React, {
  * variant_id: The specific variant (size/color combination)
  * size & color: Identify the specific variant
  */
-interface CartItem {
+export interface CartItem {
 	id: string; // Unique cart entry ID
 	product_id: string; // Product identifier
 	variant_id?: string; // Product variant ID for inventory tracking
