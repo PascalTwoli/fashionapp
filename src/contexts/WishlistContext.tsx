@@ -1,61 +1,183 @@
+import React, {
+	createContext,
+	useContext,
+	useState,
+	ReactNode,
+	useEffect,
+} from "react";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
+/**
+ * WishlistItem represents a product saved to the user's wishlist
+ * Only stores essential information needed for display and reference
+ */
+interface WishlistItem {
+	id: string; // Product ID
+	name: string;
+	price: number;
+	image: string;
+	brand?: string; // Optional: for display in wishlist
+	originalPrice?: number; // Optional: for display in wishlist
 }
 
 interface WishlistContextType {
-  wishlistItems: Product[];
-  addToWishlist: (product: Product) => void;
-  removeFromWishlist: (productId: string) => void;
-  isInWishlist: (productId: string) => boolean;
+	wishlistItems: WishlistItem[];
+	addToWishlist: (item: Omit<WishlistItem, "id"> & { id?: string }) => void;
+	removeFromWishlist: (productId: string) => void;
+	toggleWishlist: (item: Omit<WishlistItem, "id"> & { id?: string }) => void;
+	isInWishlist: (productId: string) => boolean;
+	clearWishlist: () => void;
+	isLoading: boolean;
 }
 
-const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
+const WishlistContext = createContext<WishlistContextType | undefined>(
+	undefined,
+);
+
+// Storage key
+const WISHLIST_STORAGE_KEY = "fashionup_wishlist";
+
+/**
+ * Safely parse wishlist from localStorage
+ * Returns empty array if parsing fails or data is corrupted
+ */
+const loadWishlistFromStorage = (): WishlistItem[] => {
+	try {
+		const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
+		if (!stored) return [];
+
+		const parsed = JSON.parse(stored);
+
+		// Validate the structure
+		if (!Array.isArray(parsed)) {
+			console.warn(
+				"Wishlist storage is corrupted, returning empty wishlist",
+			);
+			return [];
+		}
+
+		// Basic validation of wishlist items
+		const validItems = parsed.filter(
+			(item) =>
+				item.id &&
+				item.name &&
+				typeof item.price === "number" &&
+				item.image,
+		);
+
+		return validItems;
+	} catch (error) {
+		console.error("Failed to load wishlist from localStorage:", error);
+		return [];
+	}
+};
+
+/**
+ * Save wishlist to localStorage
+ */
+const saveWishlistToStorage = (items: WishlistItem[]): void => {
+	try {
+		localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
+	} catch (error) {
+		console.error("Failed to save wishlist to localStorage:", error);
+	}
+};
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
-  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
+	const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 
-  const addToWishlist = (product: Product) => {
-    setWishlistItems(prev => {
-      if (!prev.find(item => item.id === product.id)) {
-        return [...prev, product];
-      }
-      return prev;
-    });
-  };
+	// Initialize wishlist from localStorage on mount
+	useEffect(() => {
+		const loadedWishlist = loadWishlistFromStorage();
+		setWishlistItems(loadedWishlist);
+		setIsLoading(false);
+	}, []);
 
-  const removeFromWishlist = (productId: string) => {
-    setWishlistItems(prev => prev.filter(item => item.id !== productId));
-  };
+	// Sync wishlist to localStorage whenever it changes
+	useEffect(() => {
+		if (!isLoading) {
+			saveWishlistToStorage(wishlistItems);
+		}
+	}, [wishlistItems, isLoading]);
 
-  const isInWishlist = (productId: string) => {
-    return wishlistItems.some(item => item.id === productId);
-  };
+	const addToWishlist = (item: Omit<WishlistItem, "id"> & { id?: string }) => {
+		const productId = item.id || "";
+		if (
+			!productId ||
+			!item.name ||
+			typeof item.price !== "number" ||
+			!item.image
+		) {
+			console.warn("Invalid item data for addToWishlist:", item);
+			return;
+		}
 
-  return (
-    <WishlistContext.Provider value={{
-      wishlistItems,
-      addToWishlist,
-      removeFromWishlist,
-      isInWishlist
-    }}>
-      {children}
-    </WishlistContext.Provider>
-  );
+		setWishlistItems((prevItems) => {
+			// Check if item already exists
+			if (prevItems.find((wishItem) => wishItem.id === productId)) {
+				return prevItems; // Item already in wishlist
+			}
+
+			// Add new item
+			return [
+				...prevItems,
+				{
+					id: productId,
+					name: item.name,
+					price: item.price,
+					image: item.image,
+					...(item.brand && { brand: item.brand }),
+					...(item.originalPrice && { originalPrice: item.originalPrice }),
+				},
+			];
+		});
+	};
+
+	const removeFromWishlist = (productId: string) => {
+		setWishlistItems((prevItems) =>
+			prevItems.filter((item) => item.id !== productId),
+		);
+	};
+
+	const toggleWishlist = (
+		item: Omit<WishlistItem, "id"> & { id?: string },
+	) => {
+		const productId = item.id || "";
+		if (isInWishlist(productId)) {
+			removeFromWishlist(productId);
+		} else {
+			addToWishlist(item);
+		}
+	};
+
+	const isInWishlist = (productId: string): boolean => {
+		return wishlistItems.some((item) => item.id === productId);
+	};
+
+	const clearWishlist = () => {
+		setWishlistItems([]);
+	};
+
+	return (
+		<WishlistContext.Provider
+			value={{
+				wishlistItems,
+				addToWishlist,
+				removeFromWishlist,
+				toggleWishlist,
+				isInWishlist,
+				clearWishlist,
+				isLoading,
+			}}>
+			{children}
+		</WishlistContext.Provider>
+	);
 };
 
 export const useWishlist = () => {
-  const context = useContext(WishlistContext);
-  if (!context) {
-    throw new Error('useWishlist must be used within a WishlistProvider');
-  }
-  return context;
+	const context = useContext(WishlistContext);
+	if (!context) {
+		throw new Error("useWishlist must be used within a WishlistProvider");
+	}
+	return context;
 };
