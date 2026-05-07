@@ -7,11 +7,11 @@ import { formatKES } from '@/lib/format';
 interface ProductCardProps {
   id: string;
   name: string;
-  brand: string;
+  brand?: string;
   price: number;
   originalPrice?: number;
   image: string;
-  category: string;
+  category?: string;
   onProductClick: (id: string) => void;
   className?: string;
 }
