@@ -25,12 +25,12 @@ interface Product {
 	image_url: string | null;
 	images: string[] | null;
 	category: string | null;
-	gender: string | null;
+	gender: "men" | "women" | "unisex" | null;
 	stock_quantity: number | null;
 	sizes: string[] | null;
 	colors: string[] | null;
 	tags: string[] | null;
-	status: string | null;
+	status: "active" | "draft" | "archived" | null;
 	is_featured: boolean | null;
 	created_at: string;
 	updated_at: string;
@@ -48,156 +48,6 @@ const ProductManagement = () => {
 	useEffect(() => {
 		fetchProducts();
 	}, []);
-
-	// Initialize Supabase Storage bucket
-	const ensureBucketExists = async () => {
-		try {
-			const { data } = await supabase.storage.listBuckets();
-			const bucketExists = data?.some((b) => b.name === "products");
-
-			if (!bucketExists) {
-				await supabase.storage.createBucket("products", { public: true });
-			}
-		} catch (error) {
-			console.warn("Bucket check/creation attempted:", error);
-			// Bucket may already exist or user may not have permission, continue anyway
-		}
-	};
-
-	// Handle image file selection and upload
-	const handleImageUpload = async (file: File) => {
-		if (!file) return;
-
-		// Validate file type
-		if (!file.type.startsWith("image/")) {
-			toast({
-				title: "Error",
-				description: "Please select an image file",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		// Validate file size (max 5MB)
-		if (file.size > 5 * 1024 * 1024) {
-			toast({
-				title: "Error",
-				description: "Image size must be less than 5MB",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		// Show image preview
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			setImagePreview(e.target?.result as string);
-		};
-		reader.readAsDataURL(file);
-
-		// Upload image to Supabase Storage
-		setIsUploadingImage(true);
-		try {
-			// Generate unique filename with sanitized name
-			const timestamp = Date.now();
-			const randomString = Math.random().toString(36).substring(2, 8);
-			// Remove special characters and spaces from filename
-			const sanitizedName = file.name
-				.replace(/[^a-zA-Z0-9.-]/g, "-")
-				.replace(/-+/g, "-")
-				.toLowerCase();
-			const filename = `${timestamp}-${randomString}-${sanitizedName}`;
-
-			console.log("Uploading file:", filename);
-
-			// Upload to Supabase Storage
-			const { error: uploadError } = await supabase.storage
-				.from("products")
-				.upload(filename, file);
-
-			if (uploadError) {
-				console.error("Upload error:", uploadError);
-				throw uploadError;
-			}
-
-			console.log("File uploaded successfully");
-
-			// Get public URL
-			const { data } = supabase.storage
-				.from("products")
-				.getPublicUrl(filename);
-
-			const publicUrl = data.publicUrl;
-			console.log("Public URL:", publicUrl);
-
-			// Update form data with image URL
-			setFormData((prev) => ({
-				...prev,
-				image_url: publicUrl,
-			}));
-
-			toast({
-				title: "Success",
-				description: "Image uploaded successfully",
-			});
-		} catch (error) {
-			console.error("Error uploading image:", error);
-			toast({
-				title: "Error",
-				description:
-					"Failed to upload image. Make sure the 'products' bucket exists in Supabase Storage.",
-				variant: "destructive",
-			});
-			setImagePreview(null);
-		} finally {
-			setIsUploadingImage(false);
-			// Reset file input
-			if (fileInputRef.current) {
-				fileInputRef.current.value = "";
-			}
-		}
-	};
-
-	// Handle file input change
-	const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			handleImageUpload(file);
-		}
-	};
-
-	// Handle drag and drop
-	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragging(true);
-	};
-
-	const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragging(false);
-	};
-
-	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragging(false);
-
-		const file = e.dataTransfer.files?.[0];
-		if (file) {
-			handleImageUpload(file);
-		}
-	};
-
-	// Clear image preview and URL
-	const clearImage = () => {
-		setImagePreview(null);
-		setFormData((prev) => ({
-			...prev,
-			image_url: "",
-		}));
-	};
 
 	const fetchProducts = async () => {
 		try {
@@ -217,7 +67,7 @@ const ProductManagement = () => {
 				(data || []).map((p: any) => ({ id: p.id, status: p.status })),
 			);
 
-			setProducts(data || []);
+			setProducts((data || []) as Product[]);
 
 			// Invalidate React Query cache to sync with storefronts
 			console.log(

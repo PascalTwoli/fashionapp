@@ -31,7 +31,7 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: profile?.name || '',
-    avatar: profile?.avatar || '',
+    avatar_url: profile?.avatar_url || '',
   });
 
   React.useEffect(() => {
@@ -40,7 +40,7 @@ const Profile = () => {
 
   React.useEffect(() => {
     if (profile) {
-      setFormData({ name: profile.name || '', avatar: profile.avatar || '' });
+      setFormData({ name: profile.name || '', avatar_url: profile.avatar_url || '' });
     }
   }, [profile]);
 
@@ -55,7 +55,7 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ name: formData.name, avatar: formData.avatar || null })
+        .update({ name: formData.name, avatar_url: formData.avatar_url || null })
         .eq('id', user.id);
       if (error) throw error;
       toast({ title: 'Profile updated' });
@@ -112,9 +112,9 @@ const Profile = () => {
 
       {/* Profile header */}
       <section className="px-4 py-6 flex items-center gap-4">
-        {formData.avatar || profile?.avatar ? (
+      {formData.avatar_url || profile?.avatar_url ? (
           <img
-            src={isEditing ? formData.avatar : profile?.avatar || ''}
+            src={isEditing ? formData.avatar_url : profile?.avatar_url || ''}
             alt={profile?.name || 'Avatar'}
             className="w-16 h-16 rounded-full object-cover"
           />
@@ -146,11 +146,11 @@ const Profile = () => {
             />
           </div>
           <div>
-            <Label htmlFor="avatar" className="text-xs uppercase tracking-wider">Avatar URL</Label>
+            <Label htmlFor="avatar_url" className="text-xs uppercase tracking-wider">Avatar URL</Label>
             <Input
-              id="avatar"
-              value={formData.avatar}
-              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+              id="avatar_url"
+              value={formData.avatar_url}
+              onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
               className="mt-1.5 rounded-none h-11"
             />
           </div>

@@ -152,29 +152,29 @@ export const useProduct = (productId?: string) => {
 
 				if (!data) return null;
 
-				return {
-					id: data.id,
-					name: data.name,
-					price: data.price,
-					discount_price: data.discount_price,
-					image: data.image_url || "",
-					category: data.category || "",
-					description: data.description || "",
-					brand: data.brand || "FashionUp",
-					gender: data.gender,
-					originalPrice: data.original_price,
-					rating: data.rating || 4.5,
-					reviews: data.reviews || 0,
-					sizes: data.sizes || ["XS", "S", "M", "L", "XL"],
-					colors: data.colors || ["Black", "White"],
-					images: data.images
-						? Array.isArray(data.images)
-							? data.images
-							: [data.image_url]
-						: [data.image_url],
-					isNew: data.is_new || false,
-					status: data.status || "active",
-				};
+			return {
+				id: data.id,
+				name: data.name,
+				price: data.price,
+				discount_price: data.discount_price,
+				image: data.image_url || "",
+				category: data.category || "",
+				description: data.description || "",
+				brand: data.brand || "FashionUp",
+				gender: data.gender,
+				originalPrice: undefined,
+				rating: 4.5,
+				reviews: 0,
+				sizes: data.sizes || ["XS", "S", "M", "L", "XL"],
+				colors: data.colors || ["Black", "White"],
+				images: data.images
+					? Array.isArray(data.images)
+						? data.images
+						: [data.image_url]
+					: [data.image_url],
+				isNew: false,
+				status: data.status || "active",
+			};
 			} catch (error) {
 				console.error("Failed to fetch product:", error);
 				return null;

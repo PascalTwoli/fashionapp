@@ -7,17 +7,17 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
       order_items: {
         Row: {
           color: string | null
-          created_at: string
+          created_at: string | null
           id: string
           order_id: string
           price: number
@@ -27,7 +27,7 @@ export type Database = {
         }
         Insert: {
           color?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           order_id: string
           price: number
@@ -37,7 +37,7 @@ export type Database = {
         }
         Update: {
           color?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           order_id?: string
           price?: number
@@ -64,106 +64,174 @@ export type Database = {
       }
       orders: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           status: string | null
           total_amount: number | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           status?: string | null
           total_amount?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           status?: string | null
           total_amount?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
       }
-      products: {
+      product_variants: {
         Row: {
-          category: string | null
-          created_at: string
-          description: string | null
+          color: string
+          created_at: string | null
           id: string
-          image_url: string | null
-          name: string
-          price: number
+          price_override: number | null
+          product_id: string
+          size: string
+          sku: string | null
           stock_quantity: number | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
+          color: string
+          created_at?: string | null
           id?: string
-          image_url?: string | null
-          name: string
-          price: number
+          price_override?: number | null
+          product_id: string
+          size: string
+          sku?: string | null
           stock_quantity?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          price_override?: number | null
+          product_id?: string
+          size?: string
+          sku?: string | null
+          stock_quantity?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          brand: string | null
+          category: string | null
+          colors: string[] | null
+          created_at: string | null
+          description: string | null
+          discount_price: number | null
+          gender: string | null
+          id: string
+          image_url: string | null
+          images: string[] | null
+          is_featured: boolean | null
+          name: string
+          price: number
+          sizes: string[] | null
+          status: string | null
+          stock_quantity: number | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: string | null
           category?: string | null
-          created_at?: string
+          colors?: string[] | null
+          created_at?: string | null
           description?: string | null
+          discount_price?: number | null
+          gender?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
+          is_featured?: boolean | null
+          name: string
+          price: number
+          sizes?: string[] | null
+          status?: string | null
+          stock_quantity?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          colors?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          discount_price?: number | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_featured?: boolean | null
           name?: string
           price?: number
+          sizes?: string[] | null
+          status?: string | null
           stock_quantity?: number | null
-          updated_at?: string
+          tags?: string[] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          avatar: string | null
-          created_at: string
+          avatar_url: string | null
+          created_at: string | null
           id: string
-          name: string
-          updated_at: string
+          name: string | null
+          updated_at: string | null
         }
         Insert: {
-          avatar?: string | null
-          created_at?: string
+          avatar_url?: string | null
+          created_at?: string | null
           id: string
-          name: string
-          updated_at?: string
+          name?: string | null
+          updated_at?: string | null
         }
         Update: {
-          avatar?: string | null
-          created_at?: string
+          avatar_url?: string | null
+          created_at?: string | null
           id?: string
-          name?: string
-          updated_at?: string
+          name?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       user_roles: {
         Row: {
-          created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
-          created_at?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
-          created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -177,14 +245,14 @@ export type Database = {
     Functions: {
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -312,7 +380,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "moderator", "user"],
     },
   },
 } as const

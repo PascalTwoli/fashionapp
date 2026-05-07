@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useUserRole = () => {
 	const { user } = useAuth();
-	const [role, setRole] = useState<"admin" | "user" | null>(null);
+	const [role, setRole] = useState<"admin" | "moderator" | "user" | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const fetchUserRole = useCallback(async () => {
