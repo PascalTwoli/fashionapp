@@ -8,6 +8,8 @@ interface ProductOptionsProps {
   selectedColor: string;
   onSizeChange: (size: string) => void;
   onColorChange: (color: string) => void;
+  isOutOfStock?: boolean;
+  stockQuantity?: number;
 }
 
 const ProductOptions = ({
@@ -17,6 +19,8 @@ const ProductOptions = ({
   selectedColor,
   onSizeChange,
   onColorChange,
+  isOutOfStock = false,
+  stockQuantity,
 }: ProductOptionsProps) => {
   return (
     <div className="px-5 mt-8 space-y-6">
@@ -48,6 +52,8 @@ const ProductOptions = ({
       <div>
         <h3 className="text-eyebrow mb-3">
           Color {selectedColor && <span className="normal-case tracking-normal text-foreground">— {selectedColor}</span>}
+          {isOutOfStock && selectedSize && <span className="text-xs text-destructive ml-2">Out of Stock</span>}
+          {!isOutOfStock && selectedSize && stockQuantity && <span className="text-xs text-muted-foreground ml-2">({stockQuantity} available)</span>}
         </h3>
         <div className="flex flex-wrap gap-2">
           {colors.map((color) => (
