@@ -75,7 +75,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	const [newColorInput, setNewColorInput] = useState("");
 	const [newTagInput, setNewTagInput] = useState("");
 	const [variants, setVariants] = useState<ProductVariantRow[]>(
-		initialData?.variants || [],
+		(initialData?.variants as ProductVariantRow[]) || [],
 	);
 
 	const {
