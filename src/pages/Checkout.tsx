@@ -7,7 +7,10 @@ import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatKES } from "@/lib/format";
-import { validateCheckoutInventory, reduceCartItemsStock } from "@/lib/inventoryOperations";
+import {
+	validateCheckoutInventory,
+	reduceCartItemsStock,
+} from "@/lib/inventoryOperations";
 
 const Checkout = () => {
 	const navigate = useNavigate();
@@ -42,21 +45,22 @@ const Checkout = () => {
 	const handleSubmitPayment = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsProcessing(true);
-		
+
 		try {
 			// Validate inventory before processing
 			console.log("Validating inventory for checkout...");
 			const inventoryCheck = await validateCheckoutInventory(items);
-			
+
 			if (!inventoryCheck.isValid) {
 				// Show inventory errors
 				const errorMessage = inventoryCheck.errors.join("\n");
 				toast({
 					title: "Inventory issue",
-					description: "Some items are no longer available. Please review your cart.",
+					description:
+						"Some items are no longer available. Please review your cart.",
 					variant: "destructive",
 				});
-				
+
 				// Log detailed errors
 				console.error("Checkout inventory errors:", inventoryCheck.errors);
 				setIsProcessing(false);
@@ -68,7 +72,7 @@ const Checkout = () => {
 			// Reduce stock for all items
 			console.log("Reducing stock for cart items...");
 			const stockResult = await reduceCartItemsStock(items);
-			
+
 			if (!stockResult.success) {
 				console.error("Stock reduction errors:", stockResult.errors);
 				toast({

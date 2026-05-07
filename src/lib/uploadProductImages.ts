@@ -21,15 +21,21 @@ export const uploadProductImages = async (files: File[]): Promise<string[]> => {
 			});
 
 		if (error) {
-			console.error(`[uploadProductImages] Error uploading ${fileName}:`, error);
-			throw new Error(`Failed to upload image ${fileName}: ${error.message}`);
+			console.error(
+				`[uploadProductImages] Error uploading ${fileName}:`,
+				error,
+			);
+			throw new Error(
+				`Failed to upload image ${fileName}: ${error.message}`,
+			);
 		}
 
-		console.log("[uploadProductImages] File uploaded successfully:", fileName);
+		console.log(
+			"[uploadProductImages] File uploaded successfully:",
+			fileName,
+		);
 
-		const { data } = supabase.storage
-			.from("products")
-			.getPublicUrl(fileName);
+		const { data } = supabase.storage.from("products").getPublicUrl(fileName);
 
 		console.log("[uploadProductImages] Public URL:", data.publicUrl);
 		urls.push(data.publicUrl);

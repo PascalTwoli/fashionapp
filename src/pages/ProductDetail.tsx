@@ -19,6 +19,7 @@ import ProductInfo from "@/components/ProductInfo";
 import ProductOptions from "@/components/ProductOptions";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
+import SizeGuideModal from "@/components/SizeGuideModal";
 import { useProduct, useAllProducts } from "@/hooks/useProducts";
 import { useProductVariants } from "@/hooks/useProductVariants";
 
@@ -48,6 +49,7 @@ const ProductDetail = () => {
 	const [selectedSize, setSelectedSize] = React.useState("");
 	const [selectedColor, setSelectedColor] = React.useState("");
 	const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+	const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
 
 	// Get available colors from variants
 	const availableColors = React.useMemo(() => {
@@ -218,7 +220,8 @@ const ProductDetail = () => {
 						name={product.name}
 						brand={product.brand}
 						price={product.price}
-						originalPrice={product.originalPrice}
+						discount_price={product.discount_price}
+						gender={product.gender}
 						description={product.description}
 					/>
 
@@ -229,6 +232,7 @@ const ProductDetail = () => {
 						selectedColor={selectedColor}
 						onSizeChange={setSelectedSize}
 						onColorChange={setSelectedColor}
+						onSizeGuideClick={() => setIsSizeGuideOpen(true)}
 						isOutOfStock={isVariantOutOfStock}
 						stockQuantity={selectedVariant?.stock_quantity}
 					/>
@@ -283,6 +287,11 @@ const ProductDetail = () => {
 					))}
 				</div>
 			</section>
+
+			<SizeGuideModal
+				isOpen={isSizeGuideOpen}
+				onClose={() => setIsSizeGuideOpen(false)}
+			/>
 
 			<AddToCartButton onAddToCart={handleAddToCart} />
 			<BottomNavigation />
