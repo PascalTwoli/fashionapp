@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 import ShoppingBag from "./pages/ShoppingBag";
 import Checkout from "./pages/Checkout";
 import AdminDashboard from "./pages/AdminDashboard";
+import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/cart" element={<ShoppingBag />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

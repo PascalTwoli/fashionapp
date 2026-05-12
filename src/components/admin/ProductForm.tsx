@@ -14,7 +14,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X } from "lucide-react";
+import { X, Cloud } from "lucide-react";
+import GoogleDrivePicker from "@/components/GoogleDrivePicker";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const productSchema = z.object({
 	name: z.string().min(2, "Product name must be at least 2 characters"),
@@ -67,6 +70,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	onSubmit,
 	isLoading = false,
 }) => {
+	const { user } = useAuth();
+	const { isAdmin } = useUserRole();
 	const [imageFiles, setImageFiles] = useState<File[]>([]);
 	const [imagePreviews, setImagePreviews] = useState<string[]>(
 		initialData?.images || [],
@@ -116,6 +121,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	const removeImage = (index: number) => {
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
 		setImageFiles((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const handleGoogleDriveFilesSelected = async (files: File[]) => {
+		// Convert files to previews
+		files.forEach((file) => {
+			const reader = new FileReader();
+			reader.onload = (ev) => {
+				setImagePreviews((prev) => [...prev, ev.target?.result as string]);
+			};
+			reader.readAsDataURL(file);
+		});
+		// Add files to imageFiles
+		setImageFiles((prev) => [...prev, ...files]);
 	};
 
 	const addSize = () => {
@@ -587,25 +605,34 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			{/* Images */}
 			<div>
 				<Label>Product Images</Label>
-				<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary mb-2">
-					<input
-						type="file"
-						multiple
-						accept="image/*"
-						onChange={handleImageSelect}
-						disabled={isLoading}
-						className="hidden"
-						id="image-input"
-					/>
-					<label htmlFor="image-input" className="cursor-pointer block">
-						<p className="font-medium">Click or drag images to upload</p>
-						<p className="text-sm text-gray-500">
-							PNG, JPG up to 5MB each
-						</p>
-					</label>
+				<div className="space-y-3">
+					{/* Local File Upload */}
+					<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+						<input
+							type="file"
+							multiple
+							accept="image/*"
+							onChange={handleImageSelect}
+							disabled={isLoading}
+							className="hidden"
+							id="image-input"
+						/>
+						<label htmlFor="image-input" className="cursor-pointer block">
+							<p className="font-medium">Click or drag images to upload</p>
+							<p className="text-sm text-gray-500">
+								PNG, JPG up to 5MB each
+							</p>
+						</label>
+					</div>
+
+					{/* Google Drive Button */}
+					{isAdmin && (
+						<GoogleDrivePicker onFilesSelected={handleGoogleDriveFilesSelected} />
+					)}
 				</div>
+
 				{imagePreviews.length > 0 && (
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
 						{imagePreviews.map((preview, index) => (
 							<div key={index} className="relative group">
 								<img
