@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Cloud } from "lucide-react";
-import GoogleDrivePicker from "@/components/GoogleDrivePicker";
+import ResizableGoogleDrivePicker from "@/components/ResizableGoogleDrivePicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -76,6 +76,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	const [imagePreviews, setImagePreviews] = useState<string[]>(
 		initialData?.images || [],
 	);
+	const [isGooglePickerOpen, setIsGooglePickerOpen] = useState(false);
 	const [newSizeInput, setNewSizeInput] = useState("");
 	const [newColorInput, setNewColorInput] = useState("");
 	const [newTagInput, setNewTagInput] = useState("");
@@ -221,6 +222,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	};
 
 	return (
+		<>
 		<form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
 			{/* Basic Info */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -627,7 +629,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
 					{/* Google Drive Button */}
 					{isAdmin && (
-						<GoogleDrivePicker onFilesSelected={handleGoogleDriveFilesSelected} />
+						<Button
+							type="button"
+							onClick={() => setIsGooglePickerOpen(true)}
+							variant="outline"
+							className="w-full"
+						>
+							<Cloud className="w-4 h-4 mr-2" />
+							Open Google Drive Picker
+						</Button>
 					)}
 				</div>
 
@@ -700,6 +710,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
 				{isLoading ? "Saving..." : "Save Product"}
 			</Button>
 		</form>
+
+		<ResizableGoogleDrivePicker
+			isOpen={isGooglePickerOpen}
+			onClose={() => setIsGooglePickerOpen(false)}
+			onFilesSelected={handleGoogleDriveFilesSelected}
+		/>
+		</>
 	);
 };
 

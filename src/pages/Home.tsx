@@ -26,7 +26,7 @@ const Home = () => {
 	);
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="min-h-screen bg-background overflow-hidden flex flex-col">
 			{/* Header */}
 			<header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border z-40">
 				<div className="flex items-center justify-between px-4 h-14">
@@ -62,9 +62,9 @@ const Home = () => {
 				</div>
 			</header>
 
-			<main className="pt-14 pb-24">
-				{/* Hero */}
-				<section className="relative h-[70vh] min-h-[480px] overflow-hidden">
+		<main className="flex-1 overflow-y-auto pt-14 pb-24">
+			{/* Hero */}
+			<section className="relative h-[78.3vh] min-h-[400px] shrink-0 overflow-hidden">
 					<img
 						src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80"
 						alt="Spring 2026 Collection"
@@ -133,7 +133,7 @@ const Home = () => {
 						</div>
 					) : (
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
-							{products.slice(0, 4).map((product) => (
+							{products.slice(0, 12).map((product) => (
 								<ProductCard
 									key={product.id}
 									{...product}
@@ -199,7 +199,7 @@ const Home = () => {
 						</div>
 					) : (
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
-							{products.slice(4, 8).map((product) => (
+							{products.slice(12, 24).map((product) => (
 								<ProductCard
 									key={product.id}
 									{...product}
