@@ -21,15 +21,16 @@ import { formatKES } from "@/lib/format";
 
 interface OrderItem {
 	id: string;
+	order_id: string;
 	product_id: string;
+	variant_id: string | null;
+	product_name: string;
+	product_image: string;
+	size: string;
+	color: string;
+	unit_price: number;
 	quantity: number;
-	price: number;
-	size: string | null;
-	color: string | null;
-	products: {
-		name: string;
-		image_url: string | null;
-	};
+	line_total: number;
 }
 
 interface Order {
@@ -37,7 +38,7 @@ interface Order {
 	user_id: string;
 	status: string;
 	total_amount: number | null;
-	created_at: string;
+	placed_at: string;
 	updated_at: string;
 	customer_name?: string;
 	order_items: OrderItem[];
@@ -54,19 +55,16 @@ const OrderManagement = () => {
 
 	const fetchOrders = async () => {
 		try {
-			// First, fetch orders with order_items and products
+			// Fetch orders with order_items (products stored as snapshot)
 			const { data: ordersData, error: ordersError } = await supabase
 				.from("orders")
 				.select(
 					`
           *,
-          order_items (
-            *,
-            products (name, image_url)
-          )
+          order_items (*)
         `,
 				)
-				.order("created_at", { ascending: false });
+				.order("placed_at", { ascending: false });
 
 			if (ordersError) {
 				console.error("Orders fetch error:", ordersError);
@@ -189,8 +187,8 @@ const OrderManagement = () => {
 										Order #{order.id.slice(0, 8)}
 									</CardTitle>
 									<CardDescription>
-										Customer: {order.customer_name} • Created:{" "}
-										{new Date(order.created_at).toLocaleDateString()}
+										Customer: {order.customer_name} • Placed:{" "}
+										{new Date(order.placed_at).toLocaleDateString()}
 									</CardDescription>
 								</div>
 								<div className="flex items-center gap-4">
@@ -233,20 +231,20 @@ const OrderManagement = () => {
 									<div
 										key={item.id}
 										className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
-										{item.products?.image_url && (
+										{item.product_image && (
 											<img
-												src={item.products.image_url}
-												alt={item.products.name}
+												src={item.product_image}
+												alt={item.product_name}
 												className="w-16 h-16 object-cover rounded-md"
 											/>
 										)}
 										<div className="flex-1">
 											<h4 className="font-medium">
-												{item.products?.name}
+												{item.product_name}
 											</h4>
 											<div className="text-sm text-gray-600">
 												Quantity: {item.quantity} • Price:{" "}
-												{formatKES(item.price)}
+												{formatKES(item.unit_price)}
 												{item.size && ` • Size: ${item.size}`}
 												{item.color && ` • Color: ${item.color}`}
 											</div>

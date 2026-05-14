@@ -89,7 +89,7 @@ const Profile = () => {
   if (!user) return null;
 
   const menuItems = [
-    { icon: ShoppingBag, label: 'Orders', onClick: () => {} },
+    { icon: ShoppingBag, label: 'Orders', onClick: () => navigate('/orders') },
     { icon: Heart, label: 'Saved items', onClick: () => navigate('/wishlist') },
     { icon: MapPin, label: 'Addresses', onClick: () => {} },
     { icon: CreditCard, label: 'Payment methods', onClick: () => {} },

@@ -16,6 +16,8 @@ import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import ShoppingBag from "./pages/ShoppingBag";
 import Checkout from "./pages/Checkout";
+import OrderHistory from "./pages/OrderHistory";
+import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import NotFound from "./pages/NotFound";
@@ -41,6 +43,8 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/cart" element={<ShoppingBag />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/orders" element={<OrderHistory />} />
+                <Route path="/orders/:id" element={<OrderDetails />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
                 <Route path="*" element={<NotFound />} />
