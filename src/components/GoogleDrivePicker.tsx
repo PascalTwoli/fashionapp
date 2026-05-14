@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getGoogleDriveImagesSimple } from "@/lib/googleDriveIntegration";
+import { getGoogleDriveImagesSimple, switchGoogleAccount } from "@/lib/googleDriveIntegration";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -17,7 +17,55 @@ const GoogleDrivePicker: React.FC<GoogleDrivePickerProps> = ({
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleSwitchGoogleAccount = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to switch accounts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSwitching(true);
+    setError(null);
+
+    try {
+      console.log("[GoogleDrivePicker] Switching Google account");
+      
+      const newToken = await switchGoogleAccount(user.id);
+      
+      // Store the new token
+      const { storeGoogleTokens } = await import("@/lib/googleDriveIntegration");
+      await storeGoogleTokens(user.id, newToken);
+      
+      toast({
+        title: "Success",
+        description: "Google account switched successfully",
+      });
+
+      // Automatically open picker with new account
+      setTimeout(() => {
+        handleOpenGoogleDrivePicker();
+      }, 500);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to switch account";
+      setError(errorMessage);
+      console.error("[GoogleDrivePicker] Error switching account:", err);
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSwitching(false);
+    }
+  };
 
   const handleOpenGoogleDrivePicker = async () => {
     if (!user?.id) {
@@ -84,7 +132,7 @@ const GoogleDrivePicker: React.FC<GoogleDrivePickerProps> = ({
 
       <Button
         onClick={handleOpenGoogleDrivePicker}
-        disabled={isLoading}
+        disabled={isLoading || isSwitching}
         className="w-full"
         size="lg"
       >
@@ -98,9 +146,32 @@ const GoogleDrivePicker: React.FC<GoogleDrivePickerProps> = ({
         )}
       </Button>
 
-      <p className="text-sm text-muted-foreground text-center">
-        Click to browse and select images from your Google Drive
-      </p>
+      <div className="flex gap-2 items-center justify-between">
+        <p className="text-sm text-muted-foreground flex-1">
+          Select images from your Google Drive
+        </p>
+        
+        <Button
+          onClick={handleSwitchGoogleAccount}
+          disabled={isLoading || isSwitching}
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          title="Switch to a different Google account"
+        >
+          {isSwitching ? (
+            <>
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              Switching...
+            </>
+          ) : (
+            <>
+              <LogOut className="mr-1 h-3 w-3" />
+              Switch Account
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

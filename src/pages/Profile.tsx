@@ -18,6 +18,15 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,8 +38,9 @@ const Profile = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: profile?.name || '',
+    full_name: profile?.full_name || '',
     avatar_url: profile?.avatar_url || '',
   });
 
@@ -40,12 +50,13 @@ const Profile = () => {
 
   React.useEffect(() => {
     if (profile) {
-      setFormData({ name: profile.name || '', avatar_url: profile.avatar_url || '' });
+      setFormData({ full_name: profile.full_name || '', avatar_url: profile.avatar_url || '' });
     }
   }, [profile]);
 
-  const handleLogout = async () => {
+  const handleConfirmLogout = async () => {
     await logout();
+    setIsLogoutDialogOpen(false);
     navigate('/login');
   };
 
@@ -55,13 +66,14 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ name: formData.name, avatar_url: formData.avatar_url || null })
+        .update({ full_name: formData.full_name, avatar_url: formData.avatar_url || null })
         .eq('id', user.id);
       if (error) throw error;
-      toast({ title: 'Profile updated' });
+      toast({ title: 'Profile updated successfully' });
       setIsEditing(false);
     } catch (e) {
-      toast({ title: 'Update failed', variant: 'destructive' });
+      console.error('Update error:', e);
+      toast({ title: 'Update failed', description: 'Could not update your profile', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -77,14 +89,14 @@ const Profile = () => {
   if (!user) return null;
 
   const menuItems = [
-    { icon: ShoppingBag, label: 'Orders', onClick: () => {} },
+    { icon: ShoppingBag, label: 'Orders', onClick: () => navigate('/orders') },
     { icon: Heart, label: 'Saved items', onClick: () => navigate('/wishlist') },
     { icon: MapPin, label: 'Addresses', onClick: () => {} },
     { icon: CreditCard, label: 'Payment methods', onClick: () => {} },
     { icon: HelpCircle, label: 'Help & support', onClick: () => {} },
   ];
 
-  const initials = (profile?.name || user.email || 'U')
+  const initials = (profile?.full_name || user.email || 'U')
     .split(' ')
     .map((s) => s[0])
     .slice(0, 2)
@@ -124,7 +136,7 @@ const Profile = () => {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h2 className="font-medium truncate">{profile?.name || 'Welcome'}</h2>
+          <h2 className="font-medium truncate">{profile?.full_name || 'Welcome'}</h2>
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
         {!isEditing && (
@@ -137,11 +149,11 @@ const Profile = () => {
       {isEditing && (
         <section className="px-4 pb-6 space-y-4 border-b border-border">
           <div>
-            <Label htmlFor="name" className="text-xs uppercase tracking-wider">Name</Label>
+            <Label htmlFor="full_name" className="text-xs uppercase tracking-wider">Full Name</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              id="full_name"
+              value={formData.full_name}
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               className="mt-1.5 rounded-none h-11"
             />
           </div>
@@ -192,7 +204,7 @@ const Profile = () => {
 
       <div className="px-4 mt-8">
         <Button
-          onClick={handleLogout}
+          onClick={() => setIsLogoutDialogOpen(true)}
           variant="outline"
           className="w-full h-11 rounded-none text-xs uppercase tracking-wider"
         >
@@ -205,6 +217,23 @@ const Profile = () => {
       </div>
 
       <BottomNavigation />
+
+      <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You'll need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLogout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sign out
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

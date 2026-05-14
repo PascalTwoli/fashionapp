@@ -1,18 +1,55 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useCart } from "@/contexts/CartContext";
+import { useCartInventoryValidation } from "@/hooks/useCartInventoryValidation";
+import { useToast } from "@/hooks/use-toast";
 import { formatKES } from "@/lib/format";
 
 const ShoppingBagPage = () => {
 	const navigate = useNavigate();
 	const { items, updateQuantity, removeFromCart, totalPrice, totalItems } =
 		useCart();
+	const { toast } = useToast();
+
+	// Validate inventory on cart page load and when items change
+	const { validation, isChecking } = useCartInventoryValidation(items);
+
+	// Auto-remove out of stock items with notification
+	React.useEffect(() => {
+		if (validation.outOfStockItems.length > 0) {
+			validation.outOfStockItems.forEach((item) => {
+				removeFromCart(item.id);
+			});
+			toast({
+				title: "Items removed",
+				description: "Some items are no longer available and have been removed from your bag.",
+				variant: "destructive",
+			});
+		}
+	}, [validation.outOfStockItems.length]);
+
+	// Auto-adjust quantities for low stock items
+	React.useEffect(() => {
+		validation.lowStockItems.forEach((item) => {
+			if (item.quantity > item.available) {
+				updateQuantity(item.id, item.available);
+				toast({
+					title: "Quantity adjusted",
+					description: `${item.name}: Limited stock. Quantity adjusted to ${item.available}.`,
+					variant: "default",
+				});
+			}
+		});
+	}, [validation.lowStockItems.length]);
 
 	const shipping = totalPrice >= 10000 || totalPrice === 0 ? 0 : 500;
 	const grandTotal = totalPrice + shipping;
+
+	const canCheckout = items.length > 0 && validation.isValid && !isChecking;
 
 	return (
 		<div className="min-h-screen bg-background pb-40">
@@ -27,6 +64,49 @@ const ShoppingBagPage = () => {
 					</span>
 				</div>
 			</header>
+
+			{/* Inventory validation alerts */}
+			{isChecking && (
+				<div className="px-4 pt-4">
+					<Alert>
+						<AlertCircle className="h-4 w-4" />
+						<AlertTitle>Checking inventory</AlertTitle>
+						<AlertDescription>Verifying stock availability...</AlertDescription>
+					</Alert>
+				</div>
+			)}
+
+			{!isChecking && validation.errors.length > 0 && (
+				<div className="px-4 pt-4 space-y-2">
+					{validation.outOfStockItems.length > 0 && (
+						<Alert variant="destructive">
+							<AlertCircle className="h-4 w-4" />
+							<AlertTitle>Out of stock items removed</AlertTitle>
+							<AlertDescription>
+								{validation.outOfStockItems.map((item, idx) => (
+									<div key={idx}>
+										• {item.name} ({item.color}, Size {item.size})
+									</div>
+								))}
+							</AlertDescription>
+						</Alert>
+					)}
+
+					{validation.lowStockItems.length > 0 && (
+						<Alert>
+							<AlertCircle className="h-4 w-4" />
+							<AlertTitle>Limited stock - quantities adjusted</AlertTitle>
+							<AlertDescription>
+								{validation.lowStockItems.map((item, idx) => (
+									<div key={idx}>
+										• {item.name}: Now {item.available} available
+									</div>
+								))}
+							</AlertDescription>
+						</Alert>
+					)}
+				</div>
+			)}
 
 			{items.length === 0 ? (
 				<div className="flex flex-col items-center justify-center text-center px-8 mt-32">
@@ -142,11 +222,18 @@ const ShoppingBagPage = () => {
 					</section>
 
 					{/* Sticky checkout */}
-					<div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-background/95 backdrop-blur-md border-t border-border z-40">
+					<div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-background/95 backdrop-blur-md border-t border-border z-40 space-y-2">
+						{!canCheckout && items.length > 0 && !isChecking && (
+							<div className="text-xs text-center text-destructive">
+								{validation.outOfStockItems.length > 0 && "Please remove out of stock items to continue"}
+								{validation.lowStockItems.length > 0 && validation.outOfStockItems.length === 0 && "Stock quantities have been adjusted - please review"}
+							</div>
+						)}
 						<Button
 							onClick={() => navigate("/checkout")}
-							className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-sm tracking-wider uppercase">
-							Checkout · {formatKES(grandTotal)}
+							disabled={!canCheckout}
+							className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none text-sm tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed">
+							{isChecking ? "Checking..." : `Checkout · ${formatKES(grandTotal)}`}
 						</Button>
 					</div>
 				</>

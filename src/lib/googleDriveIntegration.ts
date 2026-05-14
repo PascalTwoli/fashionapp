@@ -107,6 +107,10 @@ export const storeGoogleTokens = async (
 ) => {
   try {
     const expiresAt = new Date(Date.now() + token.expires_in * 1000).toISOString();
+    
+    console.log("[storeGoogleTokens] Storing tokens for user:", userId);
+    console.log("[storeGoogleTokens] Token expires in:", token.expires_in, "seconds");
+    console.log("[storeGoogleTokens] Expiry date:", expiresAt);
 
     // Try to store in database first
     const { error } = await supabase
@@ -175,11 +179,17 @@ export const getStoredGoogleTokens = async (userId: string) => {
 
     if (!error && data && data.length > 0) {
       const profile = data[0];
+      const accessToken = (profile as any)?.google_drive_access_token;
+      const expiresAt = (profile as any)?.google_drive_token_expires_at;
+      
       console.log("[getStoredGoogleTokens] Found tokens in database");
+      console.log("[getStoredGoogleTokens] Access token exists:", !!accessToken);
+      console.log("[getStoredGoogleTokens] Expires at:", expiresAt);
+      
       return {
-        access_token: (profile as any)?.google_drive_access_token,
+        access_token: accessToken,
         refresh_token: (profile as any)?.google_drive_refresh_token,
-        expires_at: (profile as any)?.google_drive_token_expires_at,
+        expires_at: expiresAt,
       };
     }
 
@@ -208,8 +218,108 @@ export const getStoredGoogleTokens = async (userId: string) => {
  * Check if stored token is expired
  */
 export const isTokenExpired = (expiresAt: string | null): boolean => {
-  if (!expiresAt) return true;
-  return new Date(expiresAt) < new Date();
+  if (!expiresAt) {
+    console.log("[isTokenExpired] No expiry date provided, token is expired");
+    return true;
+  }
+  
+  // Ensure the expiry date has timezone indicator for consistent parsing
+  const normalizedExpiry = expiresAt.includes('Z') ? expiresAt : expiresAt + 'Z';
+  const expiryDate = new Date(normalizedExpiry);
+  const now = new Date();
+  const isExpired = expiryDate < now;
+  
+  console.log("[isTokenExpired] Expiry:", normalizedExpiry, "Now:", now.toISOString(), "Expired:", isExpired);
+  
+  return isExpired;
+};
+
+/**
+ * Switch to a different Google account
+ * Clears stored tokens and initiates new OAuth with account selector
+ */
+export const switchGoogleAccount = async (userId: string): Promise<GoogleAuthToken> => {
+  console.log("[switchGoogleAccount] Clearing tokens for user:", userId);
+  
+  try {
+    // Clear tokens from database
+    await supabase
+      .from("profiles")
+      .update({
+        google_drive_access_token: null,
+        google_drive_refresh_token: null,
+        google_drive_token_expires_at: null,
+      })
+      .eq("id", userId);
+
+    // Clear from localStorage
+    localStorage.removeItem(`google_drive_token_${userId}`);
+    console.log("[switchGoogleAccount] Tokens cleared from database and localStorage");
+  } catch (err) {
+    console.warn("[switchGoogleAccount] Error clearing tokens:", err);
+  }
+
+  // Initiate new OAuth with account selector prompt
+  console.log("[switchGoogleAccount] Initiating OAuth with account selector...");
+  
+  return new Promise((resolve, reject) => {
+    const clientId = GOOGLE_API_KEY;
+    const redirectUri = `${window.location.origin}/auth/google-callback`;
+    const scope = GOOGLE_DRIVE_SCOPES.join(" ");
+    const state = generateRandomState();
+
+    sessionStorage.setItem("google_oauth_state", state);
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scope,
+      state: state,
+      access_type: "offline",
+      prompt: "select_account", // Force account selector
+    });
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+    const width = 500;
+    const height = 600;
+    const left = window.screenLeft + (window.outerWidth - width) / 2;
+    const top = window.screenTop + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      authUrl,
+      "google_oauth",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    if (!popup) {
+      reject(new Error("Failed to open authentication popup"));
+      return;
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === "GOOGLE_AUTH_SUCCESS") {
+        window.removeEventListener("message", handleMessage);
+        popup.close();
+        resolve(event.data.token);
+      } else if (event.data.type === "GOOGLE_AUTH_ERROR") {
+        window.removeEventListener("message", handleMessage);
+        popup.close();
+        reject(new Error(event.data.error));
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    setTimeout(() => {
+      window.removeEventListener("message", handleMessage);
+      popup?.close();
+      reject(new Error("Google OAuth timeout"));
+    }, 10 * 60 * 1000);
+  });
 };
 
 /**
@@ -509,6 +619,7 @@ export const openGoogleFilePicker = (
       // Create the picker instance
       const picker = new w.google.picker.PickerBuilder()
         .addView(w.google.picker.ViewId.DOCS)  // Show Drive files/folders
+        .enableFeature(w.google.picker.Feature.MULTISELECT_ENABLED)  // Enable multiple file selection
         .setOAuthToken(accessToken)            // Use the user's access token
         .setCallback(async (data: any) => {
           console.log("[openGoogleFilePicker] Picker callback:", data);
@@ -516,22 +627,32 @@ export const openGoogleFilePicker = (
           if (data.action === w.google.picker.Action.PICKED) {
             const selectedFiles: GoogleDriveFile[] = [];
             
-            // Process each selected document
-            for (const doc of data.docs) {
-              // Only process image files
-              if (doc.mimeType?.startsWith("image/")) {
-                selectedFiles.push({
-                  id: doc.id,
-                  name: doc.name,
-                  mimeType: doc.mimeType,
-                  webViewLink: doc.url,
-                  createdTime: new Date().toISOString(),
-                });
+            // Debug: log all selected documents
+            console.log("[openGoogleFilePicker] Total docs in data.docs:", data.docs?.length || 0);
+            console.log("[openGoogleFilePicker] Raw data.docs:", data.docs);
+            
+            // Process each selected document (handles multiple selections)
+            if (data.docs && Array.isArray(data.docs)) {
+              for (let i = 0; i < data.docs.length; i++) {
+                const doc = data.docs[i];
+                console.log(`[openGoogleFilePicker] Processing doc ${i}:`, doc.name, "MimeType:", doc.mimeType);
+                
+                // Only process image files
+                if (doc.mimeType?.startsWith("image/")) {
+                  selectedFiles.push({
+                    id: doc.id,
+                    name: doc.name,
+                    mimeType: doc.mimeType,
+                    webViewLink: doc.url,
+                    createdTime: new Date().toISOString(),
+                  });
+                  console.log(`[openGoogleFilePicker] Added image: ${doc.name}`);
+                }
               }
             }
 
             console.log(
-              `[openGoogleFilePicker] Selected ${selectedFiles.length} image files`
+              `[openGoogleFilePicker] Selected ${selectedFiles.length} image files from ${data.docs?.length || 0} total docs`
             );
             resolve(selectedFiles);
           } else if (data.action === w.google.picker.Action.CANCEL) {
@@ -562,17 +683,28 @@ export const getGoogleDriveImagesSimple = async (
 
     // Check for stored tokens
     const tokens = await getStoredGoogleTokens(userId);
+    
+    console.log("[getGoogleDriveImagesSimple] Retrieved tokens object:", {
+      hasAccessToken: !!tokens?.access_token,
+      expiresAt: tokens?.expires_at
+    });
 
     let accessToken = tokens?.access_token;
+    
+    // Check if token is missing or expired
+    const tokenMissing = !accessToken;
+    const tokenExpired = tokens?.expires_at ? isTokenExpired(tokens.expires_at) : true;
+    
+    console.log("[getGoogleDriveImagesSimple] Token status - Missing:", tokenMissing, "Expired:", tokenExpired);
 
     // If no token or expired, prompt for re-authentication
-    if (!accessToken || isTokenExpired(tokens?.expires_at || null)) {
-      console.log(
-        "[getGoogleDriveImagesSimple] No valid token, initiating OAuth"
-      );
+    if (tokenMissing || tokenExpired) {
+      console.log("[getGoogleDriveImagesSimple] No valid token, initiating OAuth");
       const newToken = await initiateGoogleOAuth();
       await storeGoogleTokens(userId, newToken);
       accessToken = newToken.access_token;
+    } else {
+      console.log("[getGoogleDriveImagesSimple] Using stored token");
     }
 
     console.log("[getGoogleDriveImagesSimple] Opening Google Picker interface...");

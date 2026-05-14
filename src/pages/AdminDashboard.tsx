@@ -22,17 +22,19 @@ const AdminDashboard = () => {
     totalUsers: 0
   });
 
+  // Handle auth loading - redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login');
     }
   }, [user, authLoading, navigate]);
 
+  // Handle admin check - only redirect if role loading is complete and user is not admin
   useEffect(() => {
-    if (!roleLoading && !isAdmin) {
+    if (!roleLoading && user && !isAdmin) {
       navigate('/');
     }
-  }, [isAdmin, roleLoading, navigate]);
+  }, [isAdmin, roleLoading, user, navigate]);
 
   useEffect(() => {
     const fetchStats = async () => {

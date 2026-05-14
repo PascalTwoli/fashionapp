@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +38,19 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Back button */}
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
+      </div>
+
       <div className="hidden md:block fixed inset-y-0 right-0 w-1/2">
         <img
           src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=1200&q=80"
