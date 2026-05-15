@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,8 +14,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Cloud } from "lucide-react";
+import { X, Cloud, GripVertical, Copy, Trash2, Eye } from "lucide-react";
 import ResizableGoogleDrivePicker from "@/components/ResizableGoogleDrivePicker";
+import ImageViewer from "@/components/ImageViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -63,12 +64,16 @@ interface ProductFormProps {
 	initialData?: Partial<ProductFormData> & { images?: string[] };
 	onSubmit: (data: ProductFormData, images?: File[]) => Promise<void>;
 	isLoading?: boolean;
+	onChange?: () => void;
+	isInDrawer?: boolean;
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
 	initialData,
 	onSubmit,
 	isLoading = false,
+	onChange,
+	isInDrawer = false,
 }) => {
 	const { user } = useAuth();
 	const { isAdmin } = useUserRole();
@@ -77,12 +82,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 		initialData?.images || [],
 	);
 	const [isGooglePickerOpen, setIsGooglePickerOpen] = useState(false);
+	const [viewerOpen, setViewerOpen] = useState(false);
+	const [viewerIndex, setViewerIndex] = useState(0);
+	const [draggedFrom, setDraggedFrom] = useState<number | null>(null);
 	const [newSizeInput, setNewSizeInput] = useState("");
 	const [newColorInput, setNewColorInput] = useState("");
 	const [newTagInput, setNewTagInput] = useState("");
 	const [variants, setVariants] = useState<ProductVariantRow[]>(
 		(initialData?.variants as ProductVariantRow[]) || [],
 	);
+
+	// Call onChange callback when form data changes
+	const handleFormChange = useCallback(() => {
+		if (onChange) onChange();
+	}, [onChange]);
 
 	const {
 		register,
@@ -91,6 +104,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 		formState: { errors },
 		watch,
 		setValue,
+		reset,
 	} = useForm<ProductFormData>({
 		resolver: zodResolver(productSchema),
 		defaultValues: {
@@ -102,6 +116,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			tags: initialData?.tags || [],
 		},
 	});
+
+	// Update form when initialData changes (e.g., when variants are loaded)
+	useEffect(() => {
+		if (initialData) {
+			reset({
+				...initialData,
+				status: initialData?.status || "active",
+				is_featured: initialData?.is_featured || false,
+				sizes: initialData?.sizes || [],
+				colors: initialData?.colors || [],
+				tags: initialData?.tags || [],
+				variants: initialData?.variants,
+			});
+			// Update local variants state
+			if (initialData.variants && Array.isArray(initialData.variants)) {
+				setVariants(initialData.variants as ProductVariantRow[]);
+			}
+		}
+	}, [initialData, reset]);
 
 	const sizes = watch("sizes");
 	const colors = watch("colors");
@@ -117,11 +150,67 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			reader.readAsDataURL(file);
 		});
 		setImageFiles((prev) => [...prev, ...files]);
+		handleFormChange();
 	};
 
 	const removeImage = (index: number) => {
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
 		setImageFiles((prev) => prev.filter((_, i) => i !== index));
+		handleFormChange();
+	};
+
+	// Drag and drop reordering
+	const handleDragStart = (index: number) => {
+		setDraggedFrom(index);
+	};
+
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
+	};
+
+	const handleDrop = (index: number) => {
+		if (draggedFrom === null || draggedFrom === index) return;
+
+		const newPreviews = [...imagePreviews];
+		const newFiles = [...imageFiles];
+
+		// Swap positions
+		[newPreviews[draggedFrom], newPreviews[index]] = [
+			newPreviews[index],
+			newPreviews[draggedFrom],
+		];
+
+		if (newFiles.length > draggedFrom && newFiles.length > index) {
+			[newFiles[draggedFrom], newFiles[index]] = [
+				newFiles[index],
+				newFiles[draggedFrom],
+			];
+		}
+
+		setImagePreviews(newPreviews);
+		setImageFiles(newFiles);
+		setDraggedFrom(null);
+		handleFormChange();
+	};
+
+	const setAsPrimary = (index: number) => {
+		if (index === 0) return;
+		const newPreviews = [...imagePreviews];
+		const newFiles = [...imageFiles];
+
+		// Move to first position
+		const preview = newPreviews.splice(index, 1)[0];
+		newPreviews.unshift(preview);
+
+		if (newFiles.length > index) {
+			const file = newFiles.splice(index, 1)[0];
+			newFiles.unshift(file);
+		}
+
+		setImagePreviews(newPreviews);
+		setImageFiles(newFiles);
+		handleFormChange();
 	};
 
 	const handleGoogleDriveFilesSelected = async (files: File[]) => {
@@ -135,12 +224,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
 		});
 		// Add files to imageFiles
 		setImageFiles((prev) => [...prev, ...files]);
+		handleFormChange();
 	};
 
 	const addSize = () => {
 		if (newSizeInput.trim()) {
 			setValue("sizes", [...sizes, newSizeInput.toUpperCase()]);
 			setNewSizeInput("");
+			handleFormChange();
 		}
 	};
 
@@ -149,12 +240,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			"sizes",
 			sizes.filter((_, i) => i !== index),
 		);
+		handleFormChange();
 	};
 
 	const addColor = () => {
 		if (newColorInput.trim()) {
 			setValue("colors", [...colors, newColorInput]);
 			setNewColorInput("");
+			handleFormChange();
 		}
 	};
 
@@ -163,26 +256,41 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			"colors",
 			colors.filter((_, i) => i !== index),
 		);
+		handleFormChange();
 	};
 
 	const addTag = () => {
 		if (newTagInput.trim()) {
 			setValue("tags", [...(tags || []), newTagInput.toLowerCase()]);
 			setNewTagInput("");
+			handleFormChange();
 		}
 	};
 
 	const removeTag = (index: number) => {
 		setValue("tags", tags?.filter((_, i) => i !== index) || []);
+		handleFormChange();
 	};
 
 	const onFormSubmit = async (data: ProductFormData) => {
-		// Include variants in the submitted data
-		const dataWithVariants = {
-			...data,
-			variants: variants.length > 0 ? variants : undefined,
-		};
-		await onSubmit(dataWithVariants, imageFiles);
+		try {
+			console.log("[ProductForm] onFormSubmit called with data:", data);
+			console.log("[ProductForm] Variants:", variants);
+			
+			// Include variants in the submitted data
+			const dataWithVariants = {
+				...data,
+				variants: variants.length > 0 ? variants : undefined,
+			};
+			
+			console.log("[ProductForm] Submitting data with variants:", dataWithVariants);
+			await onSubmit(dataWithVariants, imageFiles);
+			console.log("[ProductForm] Submission successful");
+		} catch (error) {
+			console.error("[ProductForm] Form submission error:", error);
+			// Error will be handled by parent component's toast
+			throw error;
+		}
 	};
 
 	const addVariant = (size: string, color: string) => {
@@ -205,6 +313,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 				stock_quantity: 0,
 			},
 		]);
+		handleFormChange();
 	};
 
 	const updateVariant = (
@@ -215,15 +324,37 @@ const ProductForm: React.FC<ProductFormProps> = ({
 		const updated = [...variants];
 		updated[index] = { ...updated[index], [field]: value };
 		setVariants(updated);
+		handleFormChange();
 	};
 
 	const removeVariant = (index: number) => {
 		setVariants(variants.filter((_, i) => i !== index));
+		handleFormChange();
+	};
+
+	const duplicateVariant = (index: number) => {
+		const variant = variants[index];
+		setVariants([...variants, { ...variant }]);
+		handleFormChange();
 	};
 
 	return (
 		<>
-		<form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+		<form 
+			id="product-form" 
+			onSubmit={handleSubmit(
+				onFormSubmit,
+				(errors) => {
+					console.error("[ProductForm] Validation errors:", errors);
+					if (Object.keys(errors).length > 0) {
+						const errorMessages = Object.entries(errors)
+							.map(([field, error]: any) => `${field}: ${error?.message || 'Invalid'}`)
+							.join(", ");
+						console.error("[ProductForm] Cannot submit - validation failed:", errorMessages);
+					}
+				}
+			)}
+			className="space-y-6">
 			{/* Basic Info */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
@@ -549,13 +680,24 @@ const ProductForm: React.FC<ProductFormProps> = ({
 											/>
 										</td>
 										<td className="px-2 sm:px-3 py-2 text-center">
+										<div className="flex items-center gap-1 justify-center">
+											<button
+												type="button"
+												onClick={() => duplicateVariant(index)}
+												disabled={isLoading}
+												title="Duplicate variant"
+												className="text-blue-500 hover:text-blue-700 p-1">
+												<Copy className="w-4 h-4" />
+											</button>
 											<button
 												type="button"
 												onClick={() => removeVariant(index)}
 												disabled={isLoading}
-												className="text-red-500 hover:text-red-700">
+												title="Remove variant"
+												className="text-red-500 hover:text-red-700 p-1">
 												<X className="w-4 h-4" />
 											</button>
+										</div>
 										</td>
 									</tr>
 								))}
@@ -609,7 +751,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 				<Label>Product Images</Label>
 				<div className="space-y-3">
 					{/* Local File Upload */}
-					<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+					<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
 						<input
 							type="file"
 							multiple
@@ -633,8 +775,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 							type="button"
 							onClick={() => setIsGooglePickerOpen(true)}
 							variant="outline"
-							className="w-full"
-						>
+							className="w-full">
 							<Cloud className="w-4 h-4 mr-2" />
 							Open Google Drive Picker
 						</Button>
@@ -642,23 +783,80 @@ const ProductForm: React.FC<ProductFormProps> = ({
 				</div>
 
 				{imagePreviews.length > 0 && (
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-						{imagePreviews.map((preview, index) => (
-							<div key={index} className="relative group">
-								<img
-									src={preview}
-									alt={`Preview ${index}`}
-									className="w-full h-32 object-cover rounded-lg border border-gray-200"
-								/>
-								<button
-									type="button"
-									onClick={() => removeImage(index)}
-									disabled={isLoading}
-									className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-									<X className="w-4 h-4" />
-								</button>
-							</div>
-						))}
+					<div className="mt-4">
+						<p className="text-xs text-muted-foreground mb-3">
+							Drag to reorder images. First image will be primary.
+						</p>
+						<div className={`grid gap-3 ${isInDrawer ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
+							{imagePreviews.map((preview, index) => (
+								<div
+									key={index}
+									draggable
+									onDragStart={() => handleDragStart(index)}
+									onDragOver={handleDragOver}
+									onDrop={() => handleDrop(index)}
+									className={`relative group rounded-lg border-2 overflow-hidden transition-all cursor-move ${
+										draggedFrom === index
+											? "border-blue-400 opacity-50"
+											: "border-border hover:border-foreground"
+									}`}>
+									{/* Image */}
+									<img
+										src={preview}
+										alt={`Preview ${index}`}
+										className="w-full aspect-square object-cover"
+									/>
+
+									{/* Primary badge */}
+									{index === 0 && (
+										<div className="absolute top-1 left-1 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded">
+											Primary
+										</div>
+									)}
+
+									{/* Hover actions */}
+									<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+										<button
+											type="button"
+											onClick={() => {
+												setViewerIndex(index);
+												setViewerOpen(true);
+											}}
+											disabled={isLoading}
+											title="View"
+											className="p-2 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors">
+											<Eye className="w-4 h-4" />
+										</button>
+										{index !== 0 && (
+											<button
+												type="button"
+												onClick={() => setAsPrimary(index)}
+												disabled={isLoading}
+												title="Set as primary">
+												<span className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors">
+													Primary
+												</span>
+											</button>
+										)}
+										<button
+											type="button"
+											onClick={() => removeImage(index)}
+											disabled={isLoading}
+											title="Remove"
+											className="p-2 rounded-lg bg-red-600/80 hover:bg-red-700 text-white transition-colors">
+											<Trash2 className="w-4 h-4" />
+										</button>
+									</div>
+
+									{/* Drag indicator */}
+									{draggedFrom !== index && (
+										<div className="absolute bottom-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
+											<GripVertical className="w-4 h-4 text-white drop-shadow" />
+										</div>
+									)}
+								</div>
+							))}
+						</div>
 					</div>
 				)}
 			</div>
@@ -705,11 +903,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 				</div>
 			</div>
 
-			{/* Submit */}
-			<Button type="submit" disabled={isLoading} className="w-full">
-				{isLoading ? "Saving..." : "Save Product"}
-			</Button>
+			{/* Submit - only show when not in drawer */}
+			{!isInDrawer && (
+				<Button type="submit" disabled={isLoading} className="w-full">
+					{isLoading ? "Saving..." : "Save Product"}
+				</Button>
+			)}
 		</form>
+
+		<ImageViewer
+			images={imagePreviews}
+			initialIndex={viewerIndex}
+			isOpen={viewerOpen}
+			onClose={() => setViewerOpen(false)}
+		/>
 
 		<ResizableGoogleDrivePicker
 			isOpen={isGooglePickerOpen}
