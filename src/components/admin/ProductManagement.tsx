@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
 } from "@/components/ui/card";
-import { Plus, Edit, Trash2, ChevronDown } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Search, Filter, X as XIcon, Image as ImageIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatKES } from "@/lib/format";
 import ProductForm from "./ProductForm";
+import EditProductDrawer from "./EditProductDrawer";
+import ImageViewer from "../ImageViewer";
 import { uploadProductImages } from "@/lib/uploadProductImages";
 
 interface Product {
@@ -43,7 +50,68 @@ const ProductManagement = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// Search and filter states
+	const [searchQuery, setSearchQuery] = useState("");
+	const [filterCategory, setFilterCategory] = useState<string>("");
+	const [filterStatus, setFilterStatus] = useState<string>("");
+	const [sortBy, setSortBy] = useState<"newest" | "oldest" | "price-low" | "price-high" | "alphabetical">("newest");
+	const [productVariants, setProductVariants] = useState<Record<string, any[]>>({});
+	const [imageViewerOpen, setImageViewerOpen] = useState(false);
+	const [imageViewerProduct, setImageViewerProduct] = useState<Product | null>(null);
+
+	const categories = useMemo(
+		() => [...new Set(products.map((p) => p.category).filter(Boolean))].sort(),
+		[products],
+	);
+
+	// Filter and search products
+	const filteredProducts = useMemo(() => {
+		let result = products;
+
+		// Search
+		if (searchQuery) {
+			const q = searchQuery.toLowerCase();
+			result = result.filter(
+				(p) =>
+					p.name.toLowerCase().includes(q) ||
+					p.brand?.toLowerCase().includes(q) ||
+					p.category?.toLowerCase().includes(q),
+			);
+		}
+
+		// Category filter
+		if (filterCategory) {
+			result = result.filter((p) => p.category === filterCategory);
+		}
+
+		// Status filter
+		if (filterStatus) {
+			result = result.filter((p) => p.status === filterStatus);
+		}
+
+		// Sorting
+		result.sort((a, b) => {
+			switch (sortBy) {
+				case "newest":
+					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+				case "oldest":
+					return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+				case "price-low":
+					return (a.discount_price || a.price) - (b.discount_price || b.price);
+				case "price-high":
+					return (b.discount_price || b.price) - (a.discount_price || a.price);
+				case "alphabetical":
+					return a.name.localeCompare(b.name);
+				default:
+					return 0;
+			}
+		});
+
+		return result;
+	}, [products, searchQuery, filterCategory, filterStatus, sortBy]);
 
 	useEffect(() => {
 		fetchProducts();
@@ -62,12 +130,27 @@ const ProductManagement = () => {
 			console.log(
 				`[fetchProducts] Fetched ${(data || []).length} products from database`,
 			);
-			console.log(
-				"[fetchProducts] Product statuses:",
-				(data || []).map((p: any) => ({ id: p.id, status: p.status })),
-			);
 
 			setProducts((data || []) as Product[]);
+
+			// Fetch variants for all products to calculate accurate stock
+			if (data && data.length > 0) {
+				const { data: variants } = await supabase
+					.from("product_variants")
+					.select("*")
+					.in("product_id", data.map((p: any) => p.id));
+
+				if (variants) {
+					const variantsByProduct: Record<string, any[]> = {};
+					variants.forEach((v: any) => {
+						if (!variantsByProduct[v.product_id]) {
+							variantsByProduct[v.product_id] = [];
+						}
+						variantsByProduct[v.product_id].push(v);
+					});
+					setProductVariants(variantsByProduct);
+				}
+			}
 
 			// Invalidate React Query cache to sync with storefronts
 			console.log(
@@ -146,27 +229,83 @@ const ProductManagement = () => {
 
 				// Update variants if provided
 				if (variants && variants.length > 0) {
-					// Delete existing variants
-					await supabase
+					// Fetch existing variants from database
+					const { data: existingVariants, error: fetchError } = await supabase
 						.from("product_variants")
-						.delete()
+						.select("*")
 						.eq("product_id", editingProduct.id);
 
+					if (fetchError) throw fetchError;
+
+					// Find variants to delete (exist in DB but not in new data)
+					const variantsToDelete = (existingVariants || []).filter(
+						(existing: any) =>
+							!variants.some(
+								(v: any) => v.size === existing.size && v.color === existing.color,
+							),
+					);
+
+					// Find new variants to insert (in new data but not in DB)
+					const variantsToInsert = variants.filter(
+						(v: any) =>
+							!(existingVariants || []).some(
+								(existing: any) => existing.size === v.size && existing.color === v.color,
+							),
+					);
+
+					// Find variants to update (exist in both)
+					const variantsToUpdate = variants.filter(
+						(v: any) =>
+							(existingVariants || []).some(
+								(existing: any) => existing.size === v.size && existing.color === v.color,
+							),
+					);
+
+					// Delete variants that are no longer needed
+					if (variantsToDelete.length > 0) {
+						for (const variant of variantsToDelete) {
+							await supabase
+								.from("product_variants")
+								.delete()
+								.eq("product_id", editingProduct.id)
+								.eq("size", variant.size)
+								.eq("color", variant.color);
+						}
+					}
+
 					// Insert new variants
-					const variantsPayload = variants.map((v: any) => ({
-						product_id: editingProduct.id,
-						size: v.size,
-						color: v.color,
-						stock_quantity: v.stock_quantity,
-						sku: v.sku || null,
-						price_override: v.price_override || null,
-					}));
+					if (variantsToInsert.length > 0) {
+						const variantsPayload = variantsToInsert.map((v: any) => ({
+							product_id: editingProduct.id,
+							size: v.size,
+							color: v.color,
+							stock_quantity: v.stock_quantity,
+							sku: v.sku || null,
+							price_override: v.price_override || null,
+						}));
 
-					const { error: variantError } = await supabase
-						.from("product_variants")
-						.insert(variantsPayload);
+						const { error: variantInsertError } = await supabase
+							.from("product_variants")
+							.insert(variantsPayload);
 
-					if (variantError) throw variantError;
+						if (variantInsertError) throw variantInsertError;
+					}
+
+					// Update existing variants (if stock or price changed)
+					if (variantsToUpdate.length > 0) {
+						for (const variant of variantsToUpdate) {
+							await supabase
+								.from("product_variants")
+								.update({
+									stock_quantity: variant.stock_quantity,
+									sku: variant.sku || null,
+									price_override: variant.price_override || null,
+								})
+								.eq("product_id", editingProduct.id)
+								.eq("size", variant.size)
+								.eq("color", variant.color);
+						}
+					}
 				}
 
 				toast({
@@ -303,12 +442,13 @@ const ProductManagement = () => {
 
 	const startEdit = (product: Product) => {
 		setEditingProduct(product);
-		setShowAddForm(true);
+		setIsDrawerOpen(true);
 	};
 
 	const resetForm = () => {
 		setShowAddForm(false);
 		setEditingProduct(null);
+		setIsDrawerOpen(false);
 	};
 
 	if (isLoading) {
@@ -317,34 +457,121 @@ const ProductManagement = () => {
 
 	return (
 		<div className="space-y-6">
+			{/* Header */}
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Product Management</h2>
-				<Button onClick={() => setShowAddForm(true)}>
+				<Button onClick={() => setShowAddForm(true)} className="bg-foreground text-background">
 					<Plus className="w-4 h-4 mr-2" />
 					Add Product
 				</Button>
 			</div>
 
-			{(showAddForm || editingProduct) && (
-				<Card>
-					<CardHeader>
-						<CardTitle>
-							{editingProduct ? "Edit Product" : "Add New Product"}
-						</CardTitle>
-						<CardDescription>
-							{editingProduct
-								? "Update product information"
-								: "Add a new product to your store"}
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
+			{/* Search & Filter Toolbar */}
+			<Card className="border-border">
+				<CardContent className="p-4 space-y-4 md:space-y-0">
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+						{/* Search */}
+						<div className="relative lg:col-span-2">
+							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+							<Input
+								placeholder="Search by name, brand, category..."
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								className="pl-9 rounded-none"
+							/>
+						</div>
+
+						{/* Category Filter */}
+						<div className="flex gap-2 items-center">
+							<Select value={filterCategory} onValueChange={setFilterCategory}>
+								<SelectTrigger className="rounded-none flex-1">
+									<SelectValue placeholder="All Categories" />
+								</SelectTrigger>
+								<SelectContent>
+									{categories.map((cat) => (
+										<SelectItem key={cat} value={cat}>
+											{cat}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{filterCategory && (
+								<Button
+									size="sm"
+									variant="ghost"
+									onClick={() => setFilterCategory("")}
+									className="px-2">
+									<XIcon className="w-4 h-4" />
+								</Button>
+							)}
+						</div>
+
+						{/* Status Filter */}
+						<div className="flex gap-2 items-center">
+							<Select value={filterStatus} onValueChange={setFilterStatus}>
+								<SelectTrigger className="rounded-none flex-1">
+									<SelectValue placeholder="All Status" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="active">Active</SelectItem>
+									<SelectItem value="draft">Draft</SelectItem>
+									<SelectItem value="archived">Archived</SelectItem>
+								</SelectContent>
+							</Select>
+							{filterStatus && (
+								<Button
+									size="sm"
+									variant="ghost"
+									onClick={() => setFilterStatus("")}
+									className="px-2">
+									<XIcon className="w-4 h-4" />
+								</Button>
+							)}
+						</div>
+
+						{/* Sort */}
+						<Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+							<SelectTrigger className="rounded-none">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="newest">Newest</SelectItem>
+								<SelectItem value="oldest">Oldest</SelectItem>
+								<SelectItem value="price-low">Price (Low to High)</SelectItem>
+								<SelectItem value="price-high">Price (High to Low)</SelectItem>
+								<SelectItem value="alphabetical">Alphabetical</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+
+					{/* Clear filters button */}
+					{(searchQuery || filterCategory || filterStatus) && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => {
+								setSearchQuery("");
+								setFilterCategory("");
+								setFilterStatus("");
+							}}
+							className="text-xs">
+							Clear Filters
+						</Button>
+					)}
+				</CardContent>
+			</Card>
+
+			{/* Add Product Form Card */}
+			{showAddForm && (
+				<Card className="border-border">
+					<CardContent className="p-6">
+						<h3 className="text-lg font-semibold mb-4">Add New Product</h3>
 						<ProductForm
-							initialData={editingProduct || undefined}
 							onSubmit={handleSubmit}
 							isLoading={isSubmitting}
+							isInDrawer={false}
 						/>
 						<Button
-							type="button"
 							variant="outline"
 							onClick={resetForm}
 							disabled={isSubmitting}
@@ -354,155 +581,215 @@ const ProductManagement = () => {
 					</CardContent>
 				</Card>
 			)}
+			{/* Product Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{products.map((product) => (
-					<Card key={product.id}>
-						<CardContent className="p-4">
-							{product.images && product.images[0] ? (
-								<img
-									src={product.images[0]}
-									alt={product.name}
-									className="w-full h-48 object-cover rounded-lg mb-4"
-								/>
-							) : product.image_url ? (
-								<img
-									src={product.image_url}
-									alt={product.name}
-									className="w-full h-48 object-cover rounded-lg mb-4"
-								/>
-							) : null}
+				{filteredProducts.map((product) => {
+				// Calculate total stock from variants if available
+				const variants = productVariants[product.id] || [];
+				const totalStock = variants.length > 0
+					? variants.reduce((sum: number, v: any) => sum + (v.stock_quantity || 0), 0)
+					: product.stock_quantity || 0;
+				const isLowStock = totalStock > 0 && totalStock <= 5;
+				const isOutOfStock = totalStock === 0;
+				const primaryImage = product.images?.[0] || product.image_url;
 
-							<h3 className="font-semibold text-lg">{product.name}</h3>
-							{product.brand && (
-								<p className="text-sm text-gray-600">{product.brand}</p>
-							)}
-							<p className="text-sm text-gray-500 mb-2">
+				const statusColor =
+					product.status === "active"
+						? "bg-green-100 text-green-700"
+						: product.status === "draft"
+							? "bg-neutral-100 text-neutral-700"
+							: "bg-gray-100 text-gray-700";
+
+				return (
+					<Card
+						key={product.id}
+						className="overflow-hidden border-border hover:border-foreground/50 transition-all group">
+						{/* Image container with hover overlay */}
+							<div className="relative overflow-hidden bg-secondary/50 aspect-square">
+								{primaryImage ? (
+									<img
+										src={primaryImage}
+										alt={product.name}
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+									/>
+								) : (
+									<div className="w-full h-full flex items-center justify-center text-muted-foreground">
+										No Image
+									</div>
+								)}
+
+								{/* Status badge - top left */}
+								<div className="absolute top-3 left-3">
+									<span
+										className={`inline-block px-2.5 py-1 rounded text-xs font-semibold uppercase ${statusColor}`}>
+										{product.status || "active"}
+									</span>
+								</div>
+
+								{/* Stock status - top right */}
+								{isOutOfStock && (
+									<div className="absolute top-3 right-3">
+										<span className="inline-block px-2.5 py-1 rounded bg-red-100 text-red-700 text-xs font-semibold uppercase">
+											Out of Stock
+										</span>
+									</div>
+								)}
+								{isLowStock && !isOutOfStock && (
+									<div className="absolute top-3 right-3">
+										<span className="inline-block px-2.5 py-1 rounded bg-amber-100 text-amber-700 text-xs font-semibold uppercase">
+											Low Stock
+										</span>
+									</div>
+								)}
+
+								{/* Featured badge */}
+								{product.is_featured && (
+									<div className="absolute bottom-3 left-3">
+										<span className="inline-block px-2.5 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold uppercase">
+											Featured
+										</span>
+									</div>
+								)}
+
+								{/* Quick actions overlay - appears on hover */}
+								<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+									<button
+										onClick={() => startEdit(product)}
+										title="Edit product"
+										className="p-2.5 rounded-lg bg-white hover:bg-gray-100 text-foreground transition-colors">
+										<Edit className="w-5 h-5" />
+									</button>
+									<button
+										onClick={() => {
+											setImageViewerProduct(product);
+											setImageViewerOpen(true);
+										}}
+										title="View full-size image"
+										className="p-2.5 rounded-lg bg-white hover:bg-gray-100 text-foreground transition-colors">
+										<ImageIcon className="w-5 h-5" />
+									</button>
+									<button
+										onClick={() => handleDelete(product.id)}
+										title="Delete product"
+										className="p-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors">
+										<Trash2 className="w-5 h-5" />
+									</button>
+								</div>
+							</div>
+
+					{/* Card content */}
+					<CardContent className="p-4">
+						{/* Product name and brand */}
+						<h3 className="font-semibold text-base mb-1 line-clamp-2">
+							{product.name}
+						</h3>
+						{product.brand && (
+							<p className="text-xs text-muted-foreground mb-2">
+								{product.brand}
+							</p>
+						)}
+						{product.category && (
+							<p className="text-xs text-muted-foreground mb-3">
 								{product.category}
 							</p>
+						)}
 
-							{/* Pricing */}
-							<div className="mb-2">
-								{product.discount_price ? (
-									<div className="flex items-center gap-2">
-										<span className="line-through text-gray-400">
-											{formatKES(product.price)}
-										</span>
-										<span className="text-red-500 font-bold">
-											{formatKES(product.discount_price)}
-										</span>
-									</div>
-								) : (
-									<span className="text-lg font-bold text-foreground">
+						{/* Pricing */}
+						<div className="mb-3">
+							{product.discount_price ? (
+								<div className="flex items-center gap-2">
+									<span className="line-through text-muted-foreground text-sm">
 										{formatKES(product.price)}
 									</span>
-								)}
-							</div>
-
-							<div className="flex items-center justify-between mb-4">
-								<span className="text-sm text-gray-500">
-									Stock: {product.stock_quantity || 0}
-								</span>
-								{product.is_featured && (
-									<span className="text-xs bg-yellow-200 px-2 py-1 rounded">
-										Featured
+									<span className="text-sm font-semibold text-foreground">
+										{formatKES(product.discount_price)}
 									</span>
+								</div>
+							) : (
+								<span className="text-sm font-semibold text-foreground">
+									{formatKES(product.price)}
+								</span>
+							)}
+						</div>
+
+						{/* Stock info */}
+						<div className="mb-3 text-xs">
+							<div className="flex justify-between items-center">
+								<span className="text-muted-foreground">Stock</span>
+								<span className={`font-medium ${isOutOfStock ? "text-red-600" : isLowStock ? "text-amber-600" : "text-green-600"}`}>
+									{totalStock} {totalStock === 1 ? "unit" : "units"}
+								</span>
+							</div>
+						</div>
+
+						{/* Sizes and colors */}
+						{(product.sizes || product.colors) && (
+							<div className="mb-3 text-xs text-muted-foreground space-y-1">
+								{product.sizes && product.sizes.length > 0 && (
+									<div>
+										<span className="font-medium">Sizes:</span> {product.sizes.join(", ")}
+									</div>
+								)}
+								{product.colors && product.colors.length > 0 && (
+									<div>
+										<span className="font-medium">Colors:</span> {product.colors.join(", ")}
+									</div>
 								)}
 							</div>
+						)}
 
-							{/* Status Dropdown */}
-							<div className="mb-4">
-								<div className="relative group">
-									<Button
-										size="sm"
-										variant="outline"
-										className="w-full justify-between">
-										<span
-											className={`text-xs font-medium uppercase tracking-wider ${
-												product.status === "active"
-													? "text-green-600"
-													: product.status === "draft"
-														? "text-blue-600"
-														: "text-red-600"
-											}`}>
-											{product.status || "active"}
-										</span>
-										<ChevronDown className="w-4 h-4" />
-									</Button>
+						{/* Action buttons */}
+						<div className="flex gap-2 pt-3 border-t border-border">
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => startEdit(product)}
+								className="flex-1 text-xs rounded-none">
+								<Edit className="w-3 h-3 mr-1" />
+								Edit
+							</Button>
+							<Button
+								size="sm"
+								variant="destructive"
+								onClick={() => handleDelete(product.id)}
+								className="flex-1 text-xs rounded-none">
+								<Trash2 className="w-3 h-3 mr-1" />
+								Delete
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			);
+			})}
+		</div>
 
-									{/* Dropdown Menu */}
-									<div className="absolute left-0 right-0 mt-1 bg-background border border-border rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-										{["active", "draft", "archived"].map((status) => (
-											<button
-												key={status}
-												onClick={(e) => {
-													e.preventDefault();
-													handleStatusChange(product.id, status);
-												}}
-												className={`w-full text-left px-3 py-2 text-xs uppercase tracking-wider hover:bg-muted transition-colors ${
-													product.status === status
-														? "bg-muted font-semibold"
-														: ""
-												}`}>
-												{status}
-											</button>
-										))}
-									</div>
-								</div>
-								<p className="text-xs text-muted-foreground mt-1">
-									{product.status === "active" &&
-										"✓ Visible on storefront"}
-									{product.status === "draft" &&
-										"✕ Hidden from shoppers"}
-									{product.status === "archived" &&
-										"⊗ Archived - no image display"}
-								</p>
-							</div>
-
-							{product.sizes && product.sizes.length > 0 && (
-								<p className="text-xs text-gray-500 mb-2">
-									Sizes: {product.sizes.join(", ")}
-								</p>
-							)}
-
-							{product.tags && product.tags.length > 0 && (
-								<div className="flex flex-wrap gap-1 mb-4">
-									{product.tags.map((tag) => (
-										<span
-											key={tag}
-											className="text-xs bg-gray-200 px-2 py-1 rounded">
-											{tag}
-										</span>
-									))}
-								</div>
-							)}
-
-							<div className="flex gap-2">
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={() => startEdit(product)}>
-									<Edit className="w-4 h-4 mr-1" />
-									Edit
-								</Button>
-								<Button
-									size="sm"
-									variant="destructive"
-									onClick={() => handleDelete(product.id)}>
-									<Trash2 className="w-4 h-4 mr-1" />
-									Delete
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
-				))}
-			</div>
-
-			{products.length === 0 && !isLoading && (
+			{/* Empty state */}
+			{filteredProducts.length === 0 && !isLoading && (
 				<div className="text-center py-12">
-					<p className="text-gray-500">
-						No products found. Add your first product to get started!
+					<p className="text-muted-foreground">
+						{products.length === 0
+							? "No products found. Add your first product to get started!"
+							: "No products match your filters. Try adjusting your search."}
 					</p>
 				</div>
+			)}
+
+			{/* Edit drawer */}
+			<EditProductDrawer
+				isOpen={isDrawerOpen}
+				product={editingProduct}
+				onClose={resetForm}
+				onSubmit={handleSubmit}
+				isLoading={isSubmitting}
+			/>
+
+			{/* Image Viewer Modal */}
+			{imageViewerOpen && imageViewerProduct && (
+				<ImageViewer
+					images={imageViewerProduct.images || []}
+					isOpen={imageViewerOpen}
+					onClose={() => setImageViewerOpen(false)}
+				/>
 			)}
 		</div>
 	);
