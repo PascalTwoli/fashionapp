@@ -66,20 +66,20 @@ const ProductOptions = ({
 				)}
 			</div>
 
-			{/* Size selection - only shown after color is selected AND has available sizes */}
-			{selectedColor && sizes.length > 0 && (
-				<div>
-					<div className="flex items-center justify-between mb-3">
-						<h3 className="text-sm font-semibold">Size</h3>
-						{onSizeGuideClick && (
-							<button
-								onClick={onSizeGuideClick}
-								className="text-xs underline text-muted-foreground hover:text-foreground transition-colors">
-								Size guide
-							</button>
-						)}
-					</div>
-					{sizes.length > 0 ? (
+			{/* Size selection */}
+			<div>
+				<div className="flex items-center justify-between mb-3">
+					<h3 className="text-sm font-semibold">Size</h3>
+					{onSizeGuideClick && (
+						<button
+							onClick={onSizeGuideClick}
+							className="text-xs underline text-muted-foreground hover:text-foreground transition-colors">
+							Size guide
+						</button>
+					)}
+				</div>
+				{selectedColor ? (
+					sizes.length > 0 ? (
 						<div className="grid grid-cols-5 gap-2">
 							{sizes.map((size) => (
 								<button
@@ -97,11 +97,20 @@ const ProductOptions = ({
 						</div>
 					) : (
 						<div className="text-sm text-muted-foreground p-3 bg-muted rounded">
-							No sizes available for this product
+							No sizes available for the selected color
 						</div>
-					)}
-				</div>
-			)}
+					)
+				) : (
+					<div className="text-sm text-muted-foreground p-3 bg-muted rounded">
+						Choose a color to see available sizes
+					</div>
+				)}
+				{!isOutOfStock && selectedSize && stockQuantity !== undefined && (
+					<span className="text-xs text-muted-foreground inline-block mt-2">
+						({stockQuantity} available)
+					</span>
+				)}
+			</div>
 
 			{/* Clear Selections button - shown when user has made selections */}
 			{(selectedColor || selectedSize) && onClearSelections && (
