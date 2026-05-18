@@ -286,7 +286,7 @@ const ProductDetail = () => {
 				</div>
 
 				{/* Right: Product details (sticky on desktop) */}
-				<div className="lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+			<div className="lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto scrollbar-none">
 					<div className="px-4 py-6 lg:py-8 lg:px-6 space-y-6">
 						<ProductInfo
 							category={product.category}
@@ -313,7 +313,7 @@ const ProductDetail = () => {
 						/>
 
 						{/* Service highlights */}
-						<section className="border-t border-border divide-y divide-border">
+					<section className="divide-y divide-border">
 							{[
 								{
 									icon: Truck,
@@ -462,10 +462,9 @@ const ProductDetail = () => {
 					onAddToCart={handleAddToCart} 
 					selectedColor={selectedColor} 
 					selectedSize={selectedSize}
-					isNavbarVisible={isNavbarVisible}
-				/>
-				<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
-				<BottomNavigation isVisible={isNavbarVisible} onClose={toggleNavbar} />
+			/>
+			<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
+			<BottomNavigation isVisible={isNavbarVisible} />
 			</div>
 		</div>
 	);

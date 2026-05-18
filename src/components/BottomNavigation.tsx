@@ -4,7 +4,11 @@ import { Home, Search, ShoppingBag, Heart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 
-const BottomNavigation = () => {
+interface BottomNavigationProps {
+	isVisible?: boolean;
+}
+
+const BottomNavigation: React.FC<BottomNavigationProps> = ({ isVisible = true }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { totalItems } = useCart();
@@ -18,7 +22,12 @@ const BottomNavigation = () => {
 	];
 
 	return (
-		<nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50">
+		<nav
+			className={cn(
+				"fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-40",
+				"transition-transform duration-300 ease-out",
+				isVisible ? "translate-y-0" : "translate-y-full",
+			)}>
 			<div className="flex justify-around items-center max-w-md mx-auto px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 				{navItems.map((item) => {
 					const isActive = location.pathname === item.path;
