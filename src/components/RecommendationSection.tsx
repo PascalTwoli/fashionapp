@@ -43,7 +43,7 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
     <section className="border-t border-border">
       <div className="px-4 py-12 lg:px-6">
         {/* Section header */}
-        <div className="mb-6 max-w-5xl mx-auto">
+        <div className="mb-6">
           <p className="text-eyebrow text-xs uppercase tracking-widest text-muted-foreground">
             {subtitle || title}
           </p>
@@ -52,8 +52,8 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
 
         {/* Grid layout (desktop) or Horizontal scroll (mobile) */}
         {variant === 'grid' ? (
-          // Grid - centered with max-width
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8 max-w-5xl mx-auto">
+          // Grid - full width within parent constraint
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
             {products.map((product) => (
               <ProductRecommendationCard
                 key={product.id}

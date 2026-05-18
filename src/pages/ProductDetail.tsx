@@ -225,8 +225,10 @@ const ProductDetail = () => {
 
 
 	return (
-		<div className="min-h-screen bg-background px-6 lg:px-32">
-			{/* Fixed header - Auto-hide on scroll */}
+		<div className="min-h-screen bg-background">
+			{/* Main content wrapper with max-width and centering */}
+			<div className="px-6 lg:px-32 max-w-7xl mx-auto w-full">
+				{/* Fixed header - Auto-hide on scroll */}
 			<header className={cn(
 				"fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-3",
 				"bg-background/80 backdrop-blur-md",
@@ -348,7 +350,7 @@ const ProductDetail = () => {
 			{/* IMAGE GRID SECTION: Remaining images (Zara style - max 2 columns with elegant spacing) */}
 			{gridImages.length > 0 && (
 				<section className="py-16 lg:py-24 border-t border-border">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16 max-w-5xl mx-auto">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16">
 						{gridImages.map((img, idx) => (
 							<div
 								key={idx}
@@ -456,14 +458,15 @@ const ProductDetail = () => {
 				onClose={() => setIsSizeGuideOpen(false)}
 			/>
 
-			<AddToCartButton 
-				onAddToCart={handleAddToCart} 
-				selectedColor={selectedColor} 
-				selectedSize={selectedSize}
-				isNavbarVisible={isNavbarVisible}
-			/>
-			<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
-			<BottomNavigation isVisible={isNavbarVisible} onClose={toggleNavbar} />
+				<AddToCartButton 
+					onAddToCart={handleAddToCart} 
+					selectedColor={selectedColor} 
+					selectedSize={selectedSize}
+					isNavbarVisible={isNavbarVisible}
+				/>
+				<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
+				<BottomNavigation isVisible={isNavbarVisible} onClose={toggleNavbar} />
+			</div>
 		</div>
 	);
 };
