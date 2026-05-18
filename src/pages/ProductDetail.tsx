@@ -225,7 +225,7 @@ const ProductDetail = () => {
 
 
 	return (
-			<div className="min-h-screen bg-background px-4 lg:px-12">
+		<div className="min-h-screen bg-background px-6 lg:px-32">
 			{/* Fixed header - Auto-hide on scroll */}
 			<header className={cn(
 				"fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-3",
