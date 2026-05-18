@@ -348,7 +348,7 @@ const ProductDetail = () => {
 			{/* IMAGE GRID SECTION: Remaining images (Zara style - max 2 columns with elegant spacing) */}
 			{gridImages.length > 0 && (
 				<section className="py-16 lg:py-24 border-t border-border">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16 max-w-5xl">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16 max-w-5xl mx-auto">
 						{gridImages.map((img, idx) => (
 							<div
 								key={idx}
