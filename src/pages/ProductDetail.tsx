@@ -225,7 +225,7 @@ const ProductDetail = () => {
 
 
 	return (
-		<div className="min-h-screen bg-background">
+			<div className="min-h-screen bg-background px-4 lg:px-12">
 			{/* Fixed header - Auto-hide on scroll */}
 			<header className={cn(
 				"fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-3",
@@ -262,9 +262,9 @@ const ProductDetail = () => {
 			</header>
 
 			{/* HERO SECTION: First image + Product details side-by-side (Zara style) */}
-			<div className="pt-14 lg:grid lg:grid-cols-2 lg:min-h-screen">
+			<div className="pt-14 lg:grid lg:grid-cols-2 lg:min-h-screen lg:gap-8">
 				{/* Left: Hero image (large, clickable for fullscreen) */}
-				<div className="relative bg-gray-50 flex items-center justify-center min-h-96 lg:min-h-screen overflow-hidden group cursor-pointer"
+				<div className="relative bg-gray-50 flex items-center justify-center min-h-80 lg:min-h-screen lg:max-w-2xl overflow-hidden group cursor-pointer"
 					onClick={() => setFullscreenIndex(0)}>
 					{heroImage ? (
 						<>
@@ -347,8 +347,8 @@ const ProductDetail = () => {
 
 			{/* IMAGE GRID SECTION: Remaining images (Zara style - max 2 columns with elegant spacing) */}
 			{gridImages.length > 0 && (
-				<section className="px-8 lg:px-20 py-16 lg:py-24 border-t border-border">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-16 lg:gap-x-16 lg:gap-y-20">
+				<section className="py-16 lg:py-24 border-t border-border">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16 max-w-5xl">
 						{gridImages.map((img, idx) => (
 							<div
 								key={idx}
