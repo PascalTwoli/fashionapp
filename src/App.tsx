@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Categories from "./pages/Categories";
 import ProductDetail from "./pages/ProductDetail";
+import Gallery from "./pages/Gallery";
 import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import ShoppingBag from "./pages/ShoppingBag";
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/product/:id/gallery" element={<Gallery />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/cart" element={<ShoppingBag />} />

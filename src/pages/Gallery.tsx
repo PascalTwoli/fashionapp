@@ -31,7 +31,7 @@ const Gallery: React.FC = () => {
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background text-foreground overflow-auto">
+    <div className="fixed inset-0 z-50 bg-background text-foreground overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -69,8 +69,8 @@ const Gallery: React.FC = () => {
                   key={i}
                   onClick={() => setActiveIndex(i)}
                   className={cn(
-                    "h-20 w-16 overflow-hidden rounded border transition-all",
-                    activeIndex === i ? "ring-2 ring-foreground" : ""
+                    "h-20 w-16 overflow-hidden transition-all",
+                    activeIndex === i ? "opacity-100" : "opacity-50 hover:opacity-100"
                   )}
                 >
                   <img src={src} alt={`${product.name} ${i + 1}`} className="h-full w-full object-cover" />
@@ -89,7 +89,7 @@ const Gallery: React.FC = () => {
                 <div
                   key={i}
                   ref={(el) => (containerRefs.current[i] = el)}
-                  className={cn("bg-gray-50 overflow-hidden rounded-lg transition-all", activeIndex === i ? "ring-2 ring-foreground" : "")}
+                  className="bg-gray-50 overflow-hidden"
                 >
                   <img
                     src={src}

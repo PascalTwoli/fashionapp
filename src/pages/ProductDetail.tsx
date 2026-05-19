@@ -267,7 +267,7 @@ const ProductDetail = () => {
 			<div className="pt-14 lg:grid lg:grid-cols-2 lg:min-h-screen lg:gap-8">
 				{/* Left: Hero image (large, clickable for fullscreen) */}
 				<div className="relative bg-gray-50 flex items-center justify-center min-h-80 lg:min-h-screen lg:max-w-2xl overflow-hidden group cursor-pointer"
-					onClick={() => setFullscreenIndex(0)}>
+					onClick={() => navigate(`/product/${id}/gallery?index=0`)}>
 					{heroImage ? (
 						<>
 							<img
@@ -359,7 +359,7 @@ const ProductDetail = () => {
 							<div
 								key={idx}
 								className="relative bg-gray-50 overflow-hidden group cursor-pointer"
-								onClick={() => setFullscreenIndex(idx + 1)}>
+								onClick={() => navigate(`/product/${id}/gallery?index=${idx + 1}`)}>
 								<img
 									src={img}
 									alt={`${product.name} - view ${idx + 2}`}
