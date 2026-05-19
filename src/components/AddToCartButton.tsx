@@ -6,20 +6,22 @@ interface AddToCartButtonProps {
   onAddToCart: () => void;
   selectedColor?: string;
   selectedSize?: string;
+  isNavbarVisible?: boolean;
 }
 
 const AddToCartButton = ({ 
   onAddToCart, 
   selectedColor, 
-  selectedSize
+  selectedSize,
+  isNavbarVisible = false
 }: AddToCartButtonProps) => {
   // Determine button state based on selections
   const isColorSelected = !!selectedColor;
   const isSizeSelected = !!selectedSize;
   const isBothSelected = isColorSelected && isSizeSelected;
   
-  // Button always at bottom-0 (replaces navbar position)
-  const bottomPosition = 'bottom-0';
+  // Button position: pushed up when navbar is visible, at bottom-0 otherwise
+  const bottomPosition = isNavbarVisible ? 'bottom-16' : 'bottom-0';
   
   // Hidden: no color OR no size selected
   if (!isColorSelected || !isSizeSelected) {

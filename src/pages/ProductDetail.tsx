@@ -187,6 +187,10 @@ const ProductDetail = () => {
 			title: "Added to bag",
 			description: `${product.name} (${selectedColor}, ${selectedSize})`,
 		});
+		
+		// Clear selections after adding to bag
+		setSelectedSize("");
+		setSelectedColor("");
 	};
 
 	// Split images: hero (first) and grid (remaining) - Zara style
@@ -349,7 +353,7 @@ const ProductDetail = () => {
 
 			{/* IMAGE GRID SECTION: Remaining images (Zara style - max 2 columns with elegant spacing) */}
 			{gridImages.length > 0 && (
-				<section className="py-16 lg:py-24 border-t border-border">
+				<section className="py-16 lg:py-24">
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-12 lg:gap-y-16">
 						{gridImages.map((img, idx) => (
 							<div
@@ -461,8 +465,7 @@ const ProductDetail = () => {
 				<AddToCartButton 
 					onAddToCart={handleAddToCart} 
 					selectedColor={selectedColor} 
-					selectedSize={selectedSize}
-			/>
+					selectedSize={selectedSize}					isNavbarVisible={isNavbarVisible}			/>
 			<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
 			<BottomNavigation isVisible={isNavbarVisible} />
 			</div>

@@ -41,9 +41,9 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
 
   return (
     <section className="border-t border-border">
-      <div className="px-4 py-12 lg:px-6">
+      <div>
         {/* Section header */}
-        <div className="mb-6">
+        <div className="mb-6 px-6 lg:px-32 pt-12 lg:pt-24">
           <p className="text-eyebrow text-xs uppercase tracking-widest text-muted-foreground">
             {subtitle || title}
           </p>
@@ -53,7 +53,7 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
         {/* Grid layout (desktop) or Horizontal scroll (mobile) */}
         {variant === 'grid' ? (
           // Grid - full width within parent constraint
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8 px-6 lg:px-32">
             {products.map((product) => (
               <ProductRecommendationCard
                 key={product.id}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FloatingNavButtonProps {
@@ -47,7 +47,11 @@ const FloatingNavButton: React.FC<FloatingNavButtonProps> = ({
           'text-foreground',
           'transition-all duration-200 ease-out',
         )}>
-        <Menu className="w-5 h-5 stroke-[1.5]" />
+        {isNavbarVisible ? (
+          <X className="w-5 h-5 stroke-[1.5]" />
+        ) : (
+          <Menu className="w-5 h-5 stroke-[1.5]" />
+        )}
       </button>
     </>
   );
