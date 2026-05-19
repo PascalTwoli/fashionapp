@@ -187,10 +187,6 @@ const ProductDetail = () => {
 			title: "Added to bag",
 			description: `${product.name} (${selectedColor}, ${selectedSize})`,
 		});
-		
-		// Clear selections after adding to bag
-		setSelectedSize("");
-		setSelectedColor("");
 	};
 
 	// Split images: hero (first) and grid (remaining) - Zara style
@@ -312,18 +308,22 @@ const ProductDetail = () => {
 							onSizeChange={setSelectedSize}
 							onColorChange={setSelectedColor}
 							onSizeGuideClick={() => setIsSizeGuideOpen(true)}
-							isOutOfStock={isVariantOutOfStock}
-							stockQuantity={selectedVariant?.stock_quantity}
-						/>
+						onClearSelections={() => {
+							setSelectedSize("");
+							setSelectedColor("");
+						}}
+						isOutOfStock={isVariantOutOfStock}
+						stockQuantity={selectedVariant?.stock_quantity}
+					/>
 
-						{/* Service highlights */}
+					{/* Service highlights */}
 					<section className="divide-y divide-border">
-							{[
-								{
-									icon: Truck,
-									label: "Free shipping over KES 10,000",
-									sub: "Delivered in 2–4 business days",
-								},
+						{[
+							{
+								icon: Truck,
+								label: "Free shipping over KES 10,000",
+								sub: "Delivered in 2–4 business days",
+							},
 								{
 									icon: RotateCcw,
 									label: "Free returns within 30 days",

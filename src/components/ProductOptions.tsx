@@ -9,6 +9,7 @@ interface ProductOptionsProps {
 	onSizeChange: (size: string) => void;
 	onColorChange: (color: string) => void;
 	onSizeGuideClick?: () => void;
+	onClearSelections?: () => void;
 	isOutOfStock?: boolean;
 	stockQuantity?: number;
 }
@@ -21,6 +22,7 @@ const ProductOptions = ({
 	onSizeChange,
 	onColorChange,
 	onSizeGuideClick,
+	onClearSelections,
 	isOutOfStock = false,
 	stockQuantity,
 }: ProductOptionsProps) => {
@@ -35,14 +37,9 @@ const ProductOptions = ({
 							— {selectedColor}
 						</span>
 					)}
-					{isOutOfStock && selectedColor && (
+					{isOutOfStock && selectedColor && sizes.length === 0 && (
 						<span className="text-xs text-destructive ml-2">
 							Out of Stock
-						</span>
-					)}
-					{!isOutOfStock && selectedColor && stockQuantity && (
-						<span className="text-xs text-muted-foreground ml-2">
-							({stockQuantity} available)
 						</span>
 					)}
 				</h3>
@@ -69,8 +66,8 @@ const ProductOptions = ({
 				)}
 			</div>
 
-			{/* Size selection - only shown after color is selected */}
-			{selectedColor && (
+			{/* Size selection - only shown after color is selected AND has available sizes */}
+			{selectedColor && sizes.length > 0 && (
 				<div>
 					<div className="flex items-center justify-between mb-3">
 						<h3 className="text-sm font-semibold">Size</h3>
@@ -104,6 +101,15 @@ const ProductOptions = ({
 						</div>
 					)}
 				</div>
+			)}
+
+			{/* Clear Selections button - shown when user has made selections */}
+			{(selectedColor || selectedSize) && onClearSelections && (
+				<button
+					onClick={onClearSelections}
+					className="w-full h-11 text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors rounded mt-2">
+					Clear Selections
+				</button>
 			)}
 		</div>
 	);
