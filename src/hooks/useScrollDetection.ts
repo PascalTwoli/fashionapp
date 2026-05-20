@@ -1,50 +1,55 @@
 import { useState, useEffect } from 'react';
 
-export type ScrollDirection = 'up' | 'down' | 'idle';
+interface ScrollState {
+  isScrolling: boolean;
+  scrollDirection: 'up' | 'down' | 'idle';
+  lastScrollY: number;
+}
 
 export const useScrollDetection = () => {
-  const [scrollState, setScrollState] = useState<{
-    scrollTop: number;
-    scrollDirection: ScrollDirection;
-  }>({
-    scrollTop: 0,
+  const [scrollState, setScrollState] = useState<ScrollState>({
+    isScrolling: false,
     scrollDirection: 'idle',
+    lastScrollY: 0,
   });
 
   useEffect(() => {
-    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    let timeoutId: NodeJS.Timeout;
+    let scrollTimeout: NodeJS.Timeout;
 
     const handleScroll = () => {
-      const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      
-      let direction: ScrollDirection = 'idle';
-      if (currentScrollTop > lastScrollTop) {
-        direction = 'down';
-      } else if (currentScrollTop < lastScrollTop) {
-        direction = 'up';
-      }
+      const currentScrollY = window.scrollY;
+      const lastScrollY = scrollState.lastScrollY;
 
-      setScrollState({
-        scrollTop: currentScrollTop,
+      const direction: 'up' | 'down' | 'idle' = 
+        currentScrollY > lastScrollY ? 'down' : currentScrollY < lastScrollY ? 'up' : 'idle';
+
+      setScrollState((prev) => ({
+        ...prev,
+        isScrolling: true,
         scrollDirection: direction,
-      });
+        lastScrollY: currentScrollY,
+      }));
 
-      lastScrollTop = currentScrollTop;
+      // Clear previous timeout
+      clearTimeout(scrollTimeout);
 
-      // Reset to idle after a short delay
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setScrollState(prev => ({ ...prev, scrollDirection: 'idle' }));
-      }, 150);
+      // Set idle state after 1.5 seconds of no scrolling
+      scrollTimeout = setTimeout(() => {
+        setScrollState((prev) => ({
+          ...prev,
+          isScrolling: false,
+          scrollDirection: 'idle',
+        }));
+      }, 1500);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timeoutId);
+      clearTimeout(scrollTimeout);
     };
-  }, []);
+  }, [scrollState.lastScrollY]);
 
   return scrollState;
 };

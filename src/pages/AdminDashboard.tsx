@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Package, ShoppingCart, Users } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
-import OrderManagement from '@/components/admin/OrderManagement';
+import AdvancedOrderManagement from '@/components/admin/AdvancedOrderManagement';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="orders">
-            <OrderManagement />
+            <AdvancedOrderManagement />
           </TabsContent>
         </Tabs>
       </div>
