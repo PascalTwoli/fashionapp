@@ -39,6 +39,7 @@ interface Product {
 	tags: string[] | null;
 	status: "active" | "draft" | "archived" | null;
 	is_featured: boolean | null;
+	white_background_indices?: number[] | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -184,7 +185,7 @@ const ProductManagement = () => {
 				imageUrls = editingProduct.images;
 			}
 
-			const { variants, ...productDataWithoutVariants } = formData;
+			const { variants, white_background_indices, ...productDataWithoutVariants } = formData;
 
 			// Build product data with explicit null handling
 			const productData = {
@@ -207,6 +208,7 @@ const ProductManagement = () => {
 				is_featured: productDataWithoutVariants.is_featured || false,
 				images: imageUrls && imageUrls.length > 0 ? imageUrls : null,
 				image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null,
+				white_background_indices: white_background_indices || [],
 			};
 
 			console.log(

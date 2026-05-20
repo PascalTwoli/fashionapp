@@ -19,7 +19,8 @@ export interface Product {
 	images?: string[];
 	isNew?: boolean;
 	status?: string;
-	has_white_background?: boolean;
+	white_background_indices?: number[];
+	has_white_background?: boolean; // Helper: true if at least one image has white background
 }
 
 /**
@@ -64,6 +65,8 @@ export const useAllProducts = () => {
 						: [item.image_url],
 					isNew: item.is_new || false,
 					status: item.status || "active",
+					white_background_indices: item.white_background_indices || [],
+					has_white_background: (item.white_background_indices && item.white_background_indices.length > 0) || false,
 				}));
 			} catch (error) {
 				console.error("Failed to fetch products:", error);
@@ -119,6 +122,8 @@ export const useProductsByCategory = (category?: string) => {
 						: [item.image_url],
 					isNew: item.is_new || false,
 					status: item.status || "active",
+					white_background_indices: item.white_background_indices || [],
+					has_white_background: (item.white_background_indices && item.white_background_indices.length > 0) || false,
 				}));
 			} catch (error) {
 				console.error("Failed to fetch products by category:", error);
@@ -175,6 +180,8 @@ export const useProduct = (productId?: string) => {
 					: [data.image_url],
 				isNew: false,
 				status: data.status || "active",
+				white_background_indices: data.white_background_indices || [],
+				has_white_background: (data.white_background_indices && data.white_background_indices.length > 0) || false,
 			};
 			} catch (error) {
 				console.error("Failed to fetch product:", error);
@@ -231,6 +238,8 @@ export const useSearchProducts = (query?: string) => {
 						: [item.image_url],
 					isNew: item.is_new || false,
 					status: item.status || "active",
+					white_background_indices: item.white_background_indices || [],
+					has_white_background: (item.white_background_indices && item.white_background_indices.length > 0) || false,
 				}));
 			} catch (error) {
 				console.error("Failed to search products:", error);
