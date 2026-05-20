@@ -105,22 +105,17 @@ const ProductRecommendationCard: React.FC<ProductRecommendationCardProps> = ({
       onClick={() => onProductClick(product.id)}
       className="cursor-pointer group">
       {/* Image container */}
-      <div className="relative mb-3 overflow-hidden bg-muted aspect-square">
+      <div className="relative mb-3 overflow-hidden bg-muted aspect-[2/3]">
         {/* Image with hover zoom (desktop only) */}
         {image && (
           <img
             src={image}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
           />
         )}
 
-        {/* Discount badge */}
-        {hasDiscount && (
-          <div className="absolute top-2 right-2 bg-foreground text-background text-xs font-medium px-2 py-1 rounded">
-            {discountPercent}% OFF
-          </div>
-        )}
+
       </div>
 
       {/* Product info */}

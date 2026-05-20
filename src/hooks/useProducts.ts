@@ -19,6 +19,7 @@ export interface Product {
 	images?: string[];
 	isNew?: boolean;
 	status?: string;
+	has_white_background?: boolean;
 }
 
 /**

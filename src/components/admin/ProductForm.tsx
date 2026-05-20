@@ -81,6 +81,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	const [imagePreviews, setImagePreviews] = useState<string[]>(
 		initialData?.images || [],
 	);
+	const [whiteBackgroundImages, setWhiteBackgroundImages] = useState<boolean[]>(
+		initialData?.images?.map(() => false) || [],
+	);
 	const [isGooglePickerOpen, setIsGooglePickerOpen] = useState(false);
 	const [viewerOpen, setViewerOpen] = useState(false);
 	const [viewerIndex, setViewerIndex] = useState(0);
@@ -146,6 +149,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			const reader = new FileReader();
 			reader.onload = (ev) => {
 				setImagePreviews((prev) => [...prev, ev.target?.result as string]);
+				setWhiteBackgroundImages((prev) => [...prev, false]);
 			};
 			reader.readAsDataURL(file);
 		});
@@ -155,6 +159,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
 	const removeImage = (index: number) => {
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+		setWhiteBackgroundImages((prev) => prev.filter((_, i) => i !== index));
 		setImageFiles((prev) => prev.filter((_, i) => i !== index));
 		handleFormChange();
 	};
@@ -174,6 +179,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
 		const newPreviews = [...imagePreviews];
 		const newFiles = [...imageFiles];
+		const newWhiteBackground = [...whiteBackgroundImages];
 
 		// Swap positions
 		[newPreviews[draggedFrom], newPreviews[index]] = [
@@ -188,8 +194,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			];
 		}
 
+		[newWhiteBackground[draggedFrom], newWhiteBackground[index]] = [
+			newWhiteBackground[index],
+			newWhiteBackground[draggedFrom],
+		];
+
 		setImagePreviews(newPreviews);
 		setImageFiles(newFiles);
+		setWhiteBackgroundImages(newWhiteBackground);
 		setDraggedFrom(null);
 		handleFormChange();
 	};
@@ -198,6 +210,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 		if (index === 0) return;
 		const newPreviews = [...imagePreviews];
 		const newFiles = [...imageFiles];
+		const newWhiteBackground = [...whiteBackgroundImages];
 
 		// Move to first position
 		const preview = newPreviews.splice(index, 1)[0];
@@ -208,8 +221,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			newFiles.unshift(file);
 		}
 
+		const whiteBg = newWhiteBackground.splice(index, 1)[0];
+		newWhiteBackground.unshift(whiteBg);
+
 		setImagePreviews(newPreviews);
 		setImageFiles(newFiles);
+		setWhiteBackgroundImages(newWhiteBackground);
 		handleFormChange();
 	};
 
@@ -219,6 +236,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			const reader = new FileReader();
 			reader.onload = (ev) => {
 				setImagePreviews((prev) => [...prev, ev.target?.result as string]);
+				setWhiteBackgroundImages((prev) => [...prev, false]);
 			};
 			reader.readAsDataURL(file);
 		});
@@ -277,10 +295,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			console.log("[ProductForm] onFormSubmit called with data:", data);
 			console.log("[ProductForm] Variants:", variants);
 			
-			// Include variants in the submitted data
+			// Validate that at least one image has white background for recommendations
+			if (imagePreviews.length > 0 && !whiteBackgroundImages.includes(true)) {
+				alert("Please mark at least one image with a white background for recommendation sections");
+				return;
+			}
+
+			if (imagePreviews.length === 0) {
+				alert("Please add at least one product image");
+				return;
+			}
+			
+			// Include variants and white background info in the submitted data
 			const dataWithVariants = {
 				...data,
 				variants: variants.length > 0 ? variants : undefined,
+				// Store white background indices for images
+				white_background_indices: whiteBackgroundImages
+					.map((isWhiteBg, idx) => isWhiteBg ? idx : -1)
+					.filter(idx => idx !== -1),
 			};
 			
 			console.log("[ProductForm] Submitting data with variants:", dataWithVariants);
@@ -847,6 +880,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
 											<Trash2 className="w-4 h-4" />
 										</button>
 									</div>
+
+									{/* White background checkbox - shown in corner */}
+									<label className="absolute bottom-2 right-2 flex items-center gap-2 cursor-pointer bg-white/90 px-2 py-1 rounded text-xs font-medium hover:bg-white transition-colors">
+										<input
+											type="checkbox"
+											checked={whiteBackgroundImages[index] || false}
+											onChange={(e) => {
+												const newWhiteBackground = [...whiteBackgroundImages];
+												newWhiteBackground[index] = e.target.checked;
+												setWhiteBackgroundImages(newWhiteBackground);
+												handleFormChange();
+											}}
+											disabled={isLoading}
+											className="w-4 h-4"
+										/>
+										<span>White BG</span>
+									</label>
 
 									{/* Drag indicator */}
 									{draggedFrom !== index && (
