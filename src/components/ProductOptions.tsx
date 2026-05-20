@@ -26,6 +26,22 @@ const ProductOptions = ({
 	isOutOfStock = false,
 	stockQuantity,
 }: ProductOptionsProps) => {
+	// Show out of stock message if no colors and no sizes available
+	const isCompletelyOutOfStock = colors.length === 0 && sizes.length === 0;
+
+	if (isCompletelyOutOfStock) {
+		return (
+			<div className="px-5 mt-8 space-y-6">
+				<div className="p-4 bg-muted rounded-lg border border-border">
+					<p className="text-sm font-medium text-foreground">Out of Stock</p>
+					<p className="text-sm text-muted-foreground mt-1">
+						This product is currently unavailable. Please check back soon or explore similar items.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="px-5 mt-8 space-y-6">
 			{/* Color selection - always shown first */}
