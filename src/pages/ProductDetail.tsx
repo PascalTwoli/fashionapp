@@ -207,21 +207,31 @@ const ProductDetail = () => {
 	const styleWith = activeProducts
 		.filter((p) => {
 			if (p.id === product.id) return false;
+			// Only show products with white background
+			if (!p.has_white_background) return false;
+			// Gender matching: same gender or unisex
+			const currentGender = product.gender?.toLowerCase() || '';
+			const pGender = p.gender?.toLowerCase() || '';
+			const genderMatch = currentGender === pGender || 
+				pGender === 'unisex' || 
+				currentGender === 'unisex';
+			if (!genderMatch) return false;
+			// Category matching for complementary items
 			const currentCategory = product.category?.toLowerCase() || '';
 			const complements = complementaryCategories[currentCategory] || [];
 			const pCategory = p.category?.toLowerCase() || '';
 			return complements.includes('all') || complements.some(c => pCategory.includes(c));
-		})
-		.slice(0, 8);
+		});
 
 	// Similar products for "YOU MAY ALSO LIKE"
 	const youMayAlsoLike = activeProducts
 		.filter((p) => {
 			if (p.id === product.id) return false;
+			// Only show products with white background
+			if (!p.has_white_background) return false;
 			const sameCategory = p.category?.toLowerCase() === product.category?.toLowerCase();
 			return sameCategory;
-		})
-		.slice(0, 8);
+		});
 
 
 	return (
