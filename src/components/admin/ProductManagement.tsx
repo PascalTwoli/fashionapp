@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatKES } from "@/lib/format";
+import { removeBackground, downloadProcessedImage } from "@/lib/backgroundRemoval";
 import ProductForm from "./ProductForm";
 import EditProductDrawer from "./EditProductDrawer";
 import ImageViewer from "../ImageViewer";
@@ -40,6 +41,7 @@ interface Product {
 	status: "active" | "draft" | "archived" | null;
 	is_featured: boolean | null;
 	white_background_indices?: number[] | null;
+	has_white_background?: boolean | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -187,6 +189,57 @@ const ProductManagement = () => {
 
 			const { variants, white_background_indices, ...productDataWithoutVariants } = formData;
 
+			// Process white background images if marked
+			if (white_background_indices && white_background_indices.length > 0 && imageUrls.length > 0) {
+				console.log("[ProductManagement] Processing white background images...", white_background_indices);
+				
+				const processedUrls = [...imageUrls];
+				
+				for (const index of white_background_indices) {
+					if (index < processedUrls.length) {
+						try {
+							console.log(`[ProductManagement] Processing image at index ${index}...`);
+							
+							const result = await removeBackground(processedUrls[index], {
+								throwOnError: false,
+							});
+							
+							if (result.success) {
+								console.log(`[ProductManagement] Background removal succeeded for image ${index} using ${result.method}`);
+								
+								// Download and re-upload the processed image
+								const processedFile = await downloadProcessedImage(
+									result.imageUrl,
+									`product-${Date.now()}-${index}.png`
+								);
+								
+								const processedUrls_temp = await uploadProductImages([processedFile]);
+								if (processedUrls_temp.length > 0) {
+									processedUrls[index] = processedUrls_temp[0];
+									console.log(`[ProductManagement] Processed image uploaded: ${processedUrls[index]}`);
+								}
+							} else {
+								console.warn(`[ProductManagement] Background removal failed for image ${index}:`, result.error);
+								toast({
+									title: "Warning",
+									description: `Failed to remove background from image ${index + 1}: ${result.error}. Using original image.`,
+									variant: "destructive",
+								});
+							}
+						} catch (bgError) {
+							console.error(`[ProductManagement] Error processing image at index ${index}:`, bgError);
+							toast({
+								title: "Warning",
+								description: `Error processing image ${index + 1}. Using original image.`,
+								variant: "destructive",
+							});
+						}
+					}
+				}
+				
+				imageUrls = processedUrls;
+			}
+
 			// Build product data with explicit null handling
 			const productData = {
 				name: productDataWithoutVariants.name,
@@ -209,6 +262,7 @@ const ProductManagement = () => {
 				images: imageUrls && imageUrls.length > 0 ? imageUrls : null,
 				image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null,
 				white_background_indices: white_background_indices || [],
+				has_white_background: (white_background_indices && white_background_indices.length > 0) ? true : false,
 			};
 
 			console.log(
