@@ -228,6 +228,20 @@ export const updateProductMetaTags = (data: ProductMetaData): void => {
   } catch (error) {
     console.error('[MetaTags] Failed to update product schema:', error);
   }
+
+  // Verify tags were set (for debugging)
+  if (process.env.NODE_ENV === 'development') {
+    setTimeout(() => {
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      console.log('[MetaTags] Verification:', {
+        ogTitleSet: !!ogTitle,
+        ogTitleContent: ogTitle?.getAttribute('content'),
+        twitterCardSet: !!twitterCard,
+        twitterCardContent: twitterCard?.getAttribute('content'),
+      });
+    }, 100);
+  }
 };
 
 /**

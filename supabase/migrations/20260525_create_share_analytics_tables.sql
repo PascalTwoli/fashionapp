@@ -59,7 +59,7 @@ SELECT
   COUNT(CASE WHEN se.platform = 'qr_code' THEN 1 END) as qr_code_shares,
   COUNT(CASE WHEN se.platform = 'copy_link' THEN 1 END) as copy_link_shares,
   COUNT(DISTINCT sc.visitor_session_id) as referral_clicks,
-  ROUND(CAST(COUNT(DISTINCT sc.visitor_session_id) AS FLOAT) / NULLIF(COUNT(*), 0) * 100, 2) as referral_click_rate
+  ROUND(CAST(COUNT(DISTINCT sc.visitor_session_id) AS NUMERIC) / NULLIF(COUNT(*), 0) * 100, 2) as referral_click_rate
 FROM share_events se
 LEFT JOIN share_conversions sc ON se.referral_code = sc.referral_code
 GROUP BY se.product_id;

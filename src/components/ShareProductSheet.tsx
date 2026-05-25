@@ -125,7 +125,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
     try {
       setError(null);
       await createTrackedLink('whatsapp', '');
-      const link = generateWhatsAppLink(productUrl, productName);
+      const link = generateWhatsAppLink(productUrl, productName, productPrice, discountPrice);
       openShareWindow(link, 'WhatsApp');
       onClose();
     } catch (err) {
@@ -149,7 +149,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
     try {
       setError(null);
       await createTrackedLink('twitter', '');
-      const link = generateTwitterLink(productUrl, productName);
+      const link = generateTwitterLink(productUrl, productName, productPrice, discountPrice);
       openShareWindow(link, 'X/Twitter');
       onClose();
     } catch (err) {
@@ -161,7 +161,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
     try {
       setError(null);
       await createTrackedLink('telegram', '');
-      const link = generateTelegramLink(productUrl, productName);
+      const link = generateTelegramLink(productUrl, productName, productPrice, discountPrice);
       openShareWindow(link, 'Telegram');
       onClose();
     } catch (err) {
@@ -173,7 +173,9 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
     try {
       setError(null);
       await createTrackedLink('pinterest', '');
-      const link = generatePinterestLink(productImage, productUrl, productName);
+      const displayPrice = discountPrice ? discountPrice : productPrice;
+      const description = `${productName} - KES ${displayPrice.toLocaleString()} | FashionUp`;
+      const link = generatePinterestLink(productImage, productUrl, description);
       openShareWindow(link, 'Pinterest');
       onClose();
     } catch (err) {
@@ -215,7 +217,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       {/* Sheet */}
       <div
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-2xl border-t border-border',
+          'fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border',
           'transition-transform duration-300 ease-out max-w-md mx-auto w-full',
           isOpen ? 'translate-y-0' : 'translate-y-full',
         )}
@@ -228,8 +230,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
-            className="rounded-full">
+            onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -248,7 +249,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
         <div className="px-6 py-6 space-y-3 border-b border-border">
           <div className="flex gap-4">
             {/* Image thumbnail */}
-            <div className="w-20 h-24 rounded overflow-hidden bg-muted flex-shrink-0">
+            <div className="w-20 h-24 overflow-hidden bg-muted flex-shrink-0">
               <img
                 src={productImage}
                 alt={productName}
@@ -317,7 +318,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handleWhatsApp}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on WhatsApp"
                   title="WhatsApp">
                   <MessageCircle className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -327,7 +328,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handleFacebook}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Facebook"
                   title="Facebook">
                   <Facebook className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -337,7 +338,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handleTwitter}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on X"
                   title="X">
                   <svg
@@ -352,7 +353,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handleTelegram}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Telegram"
                   title="Telegram">
                   <Send className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -362,7 +363,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handlePinterest}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Pinterest"
                   title="Pinterest">
                   <Heart className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -372,7 +373,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 <button
                   onClick={handleQRCode}
                   disabled={isSharing}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  className="aspect-square bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Generate QR Code"
                   title="QR Code">
                   <QrCode className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -417,7 +418,6 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       </div>
     </>
   );
-};
 };
 
 export default ShareProductSheet;

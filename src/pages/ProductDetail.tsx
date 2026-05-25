@@ -44,8 +44,8 @@ const ProductDetail = () => {
 		error: productError,
 	} = useProduct(id);
 
-	// Fetch product variants (size/color inventory)
-	const { data: variants = [] } = useProductVariants(id);
+	// Fetch product variants (size/color inventory) - use product.id once resolved
+	const { data: variants = [] } = useProductVariants(product?.id);
 
 	// Fetch all products for related items (show active and archived, hide draft)
 	const { data: allProducts = [] } = useAllProducts();

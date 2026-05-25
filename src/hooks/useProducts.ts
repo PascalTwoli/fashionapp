@@ -145,11 +145,40 @@ export const useProduct = (productId?: string) => {
 			if (!productId) return null;
 
 			try {
-				const { data, error } = await supabase
-					.from("products")
-					.select("*")
-					.eq("id", productId)
-					.single();
+				// Import slug generator to check if input is a slug
+				const { generateProductSlug } = await import("@/lib/shareUtils");
+
+				// Check if productId looks like a UUID (contains dashes and is 36 chars)
+				const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId);
+
+				let data;
+				let error;
+
+				if (isUUID) {
+					// Direct UUID lookup
+					const result = await supabase
+						.from("products")
+						.select("*")
+						.eq("id", productId)
+						.single();
+					data = result.data;
+					error = result.error;
+				} else {
+					// Slug-based lookup: fetch all products and filter
+					const { data: allProducts, error: allError } = await supabase
+						.from("products")
+						.select("*")
+						.order("created_at", { ascending: false });
+
+					if (allError) throw allError;
+
+					const product = allProducts?.find(
+						(p) => generateProductSlug(p.name) === productId
+					);
+
+					data = product || null;
+					error = product ? null : new Error(`Product not found: ${productId}`);
+				}
 
 				if (error) {
 					console.error("Error fetching product:", error);

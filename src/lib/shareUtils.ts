@@ -98,8 +98,12 @@ export const shareViaNavigator = async (shareData: {
 /**
  * Generate WhatsApp share link
  */
-export const generateWhatsAppLink = (url: string, productName: string): string => {
-  const text = encodeURIComponent(`Check out this product: ${productName}\n${url}`);
+export const generateWhatsAppLink = (url: string, productName: string, price: number, discountPrice?: number): string => {
+  const displayPrice = discountPrice ? discountPrice : price;
+  // Format: Product name and price on first line, URL on second line (WhatsApp recognizes this pattern better)
+  const text = encodeURIComponent(
+    `${productName}\nKES ${displayPrice.toLocaleString()}\n\n${url}`
+  );
   return `https://wa.me/?text=${text}`;
 };
 
@@ -113,16 +117,22 @@ export const generateFacebookLink = (url: string): string => {
 /**
  * Generate X/Twitter share link
  */
-export const generateTwitterLink = (url: string, productName: string): string => {
-  const text = encodeURIComponent(`Just found this on FashionUp: ${productName}`);
+export const generateTwitterLink = (url: string, productName: string, price: number, discountPrice?: number): string => {
+  const displayPrice = discountPrice ? discountPrice : price;
+  const text = encodeURIComponent(
+    `${productName} - KES ${displayPrice.toLocaleString()} on FashionUp\n${url}`
+  );
   return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${text}&via=fashionup`;
 };
 
 /**
  * Generate Telegram share link
  */
-export const generateTelegramLink = (url: string, productName: string): string => {
-  const text = encodeURIComponent(`${productName} - ${url}`);
+export const generateTelegramLink = (url: string, productName: string, price: number, discountPrice?: number): string => {
+  const displayPrice = discountPrice ? discountPrice : price;
+  const text = encodeURIComponent(
+    `${productName}\nKES ${displayPrice.toLocaleString()}\n\n${url}`
+  );
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`;
 };
 
