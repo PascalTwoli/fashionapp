@@ -116,6 +116,7 @@ const ProductDetail = () => {
 				product.name,
 				product.category,
 				product.brand,
+				product.discount_price ? product.discount_price < product.price : false,
 			);
 
 			updateProductMetaTags({
@@ -124,7 +125,12 @@ const ProductDetail = () => {
 				image: productImage,
 				url: productUrl,
 				price: product.discount_price ? product.discount_price.toString() : product.price.toString(),
+				originalPrice: product.discount_price && product.discount_price < product.price ? product.price.toString() : undefined,
 				brand: product.brand || 'FashionUp',
+				category: product.category,
+				productId: product.id,
+				rating: product.rating,
+				reviews: product.reviews,
 			});
 		} catch (error) {
 			console.error('[ProductDetail] Failed to update meta tags:', error);
@@ -539,6 +545,7 @@ const ProductDetail = () => {
 				discountPrice={product.discount_price}
 				productImage={product.images?.[0] || product.image_url || ''}
 				productUrl={generateProductUrl(generateProductSlug(product.name), product.id)}
+				productId={product.id}
 			/>
 
 				<AddToCartButton 

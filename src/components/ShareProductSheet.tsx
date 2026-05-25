@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Copy, Share2, MessageCircle, Facebook, Heart, Send } from 'lucide-react';
+import { X, Copy, Share2, MessageCircle, Facebook, Heart, Send, AlertCircle, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import {
   copyToClipboard,
@@ -13,6 +14,13 @@ import {
   generatePinterestLink,
   openShareWindow,
 } from '@/lib/shareUtils';
+import {
+  trackShareEvent,
+  trackShareWithReferral,
+  formatShareMetrics,
+  getLocalShareMetrics,
+  type SharePlatform,
+} from '@/lib/shareAnalytics';
 import { cn } from '@/lib/utils';
 
 interface ShareProductSheetProps {
@@ -23,6 +31,7 @@ interface ShareProductSheetProps {
   discountPrice?: number;
   productImage: string;
   productUrl: string;
+  productId: string;
 }
 
 const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
@@ -33,73 +42,162 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
   discountPrice,
   productImage,
   productUrl,
+  productId,
 }) => {
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const hasNativeShare = isNativeShareSupported();
+  const shareMetrics = getLocalShareMetrics(productId);
 
   const handleCopyLink = async () => {
-    const success = await copyToClipboard(productUrl);
-    if (success) {
-      setIsCopied(true);
-      toast({
-        title: 'Link copied',
-        description: 'Product link copied to clipboard',
-      });
-      setTimeout(() => setIsCopied(false), 2000);
-    } else {
-      toast({
-        title: 'Failed to copy',
-        description: 'Please try again',
-        variant: 'destructive',
-      });
+    try {
+      setError(null);
+      const success = await copyToClipboard(productUrl);
+      if (success) {
+        setIsCopied(true);
+
+        // Track analytics
+        await trackShareEvent({
+          productId,
+          productName,
+          platform: 'copy_link',
+          timestamp: Date.now(),
+        });
+
+        toast({
+          title: 'Link copied',
+          description: 'Product link copied to clipboard',
+        });
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        throw new Error('Copy failed');
+      }
+    } catch (err) {
+      setError('Failed to copy link. Please try again.');
+      console.error('[ShareSheet] Copy error:', err);
     }
   };
 
   const handleNativeShare = async () => {
-    setIsSharing(true);
-    const success = await shareViaNavigator({
-      title: productName,
-      text: `${productName} - KES ${discountPrice ? discountPrice.toLocaleString() : productPrice.toLocaleString()}`,
-      url: productUrl,
-    });
-    setIsSharing(false);
+    try {
+      setError(null);
+      setIsSharing(true);
+      const success = await shareViaNavigator({
+        title: productName,
+        text: `${productName} - KES ${discountPrice ? discountPrice.toLocaleString() : productPrice.toLocaleString()}`,
+        url: productUrl,
+      });
+      setIsSharing(false);
 
-    if (success) {
-      onClose();
+      if (success) {
+        // Track analytics
+        await trackShareEvent({
+          productId,
+          productName,
+          platform: 'native',
+          timestamp: Date.now(),
+        });
+
+        toast({
+          title: 'Shared!',
+          description: 'Product shared successfully',
+        });
+        onClose();
+      }
+    } catch (err) {
+      setIsSharing(false);
+      setError('Share failed. Please try another method.');
+      console.error('[ShareSheet] Share error:', err);
     }
   };
 
-  const handleWhatsApp = () => {
-    const link = generateWhatsAppLink(productUrl, productName);
-    openShareWindow(link, 'WhatsApp');
-    onClose();
+  const createTrackedLink = async (platform: SharePlatform, link: string) => {
+    // Track share event with referral code
+    const referralCode = await trackShareWithReferral(productId, productName, platform);
+    // In future: append referral code to link
+    return link;
   };
 
-  const handleFacebook = () => {
-    const link = generateFacebookLink(productUrl);
-    openShareWindow(link, 'Facebook');
-    onClose();
+  const handleWhatsApp = async () => {
+    try {
+      setError(null);
+      await createTrackedLink('whatsapp', '');
+      const link = generateWhatsAppLink(productUrl, productName);
+      openShareWindow(link, 'WhatsApp');
+      onClose();
+    } catch (err) {
+      setError('Failed to share on WhatsApp');
+    }
   };
 
-  const handleTwitter = () => {
-    const link = generateTwitterLink(productUrl, productName);
-    openShareWindow(link, 'X/Twitter');
-    onClose();
+  const handleFacebook = async () => {
+    try {
+      setError(null);
+      await createTrackedLink('facebook', '');
+      const link = generateFacebookLink(productUrl);
+      openShareWindow(link, 'Facebook');
+      onClose();
+    } catch (err) {
+      setError('Failed to share on Facebook');
+    }
   };
 
-  const handleTelegram = () => {
-    const link = generateTelegramLink(productUrl, productName);
-    openShareWindow(link, 'Telegram');
-    onClose();
+  const handleTwitter = async () => {
+    try {
+      setError(null);
+      await createTrackedLink('twitter', '');
+      const link = generateTwitterLink(productUrl, productName);
+      openShareWindow(link, 'X/Twitter');
+      onClose();
+    } catch (err) {
+      setError('Failed to share on X/Twitter');
+    }
   };
 
-  const handlePinterest = () => {
-    const link = generatePinterestLink(productImage, productUrl, productName);
-    openShareWindow(link, 'Pinterest');
-    onClose();
+  const handleTelegram = async () => {
+    try {
+      setError(null);
+      await createTrackedLink('telegram', '');
+      const link = generateTelegramLink(productUrl, productName);
+      openShareWindow(link, 'Telegram');
+      onClose();
+    } catch (err) {
+      setError('Failed to share on Telegram');
+    }
+  };
+
+  const handlePinterest = async () => {
+    try {
+      setError(null);
+      await createTrackedLink('pinterest', '');
+      const link = generatePinterestLink(productImage, productUrl, productName);
+      openShareWindow(link, 'Pinterest');
+      onClose();
+    } catch (err) {
+      setError('Failed to share on Pinterest');
+    }
+  };
+
+  const handleQRCode = async () => {
+    try {
+      setError(null);
+      // TODO: Generate QR code - can use qrcode.react library
+      await trackShareEvent({
+        productId,
+        productName,
+        platform: 'qr_code',
+        timestamp: Date.now(),
+      });
+      toast({
+        title: 'QR Code',
+        description: 'QR code feature coming soon',
+      });
+    } catch (err) {
+      setError('Failed to generate QR code');
+    }
   };
 
   return (
@@ -136,6 +234,16 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
           </Button>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="px-6 pt-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         {/* Product Preview */}
         <div className="px-6 py-6 space-y-3 border-b border-border">
           <div className="flex gap-4">
@@ -167,6 +275,15 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
           </div>
         </div>
 
+        {/* Share Metrics */}
+        {shareMetrics.totalShares > 0 && (
+          <div className="px-6 py-3 border-b border-border bg-muted/30">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              {formatShareMetrics(shareMetrics)}
+            </p>
+          </div>
+        )}
+
         {/* Share Actions */}
         <div className="px-6 py-6 space-y-3">
           {/* Native Share - Primary if supported */}
@@ -195,11 +312,12 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
               <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">
                 Share to
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {/* WhatsApp */}
                 <button
                   onClick={handleWhatsApp}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group"
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on WhatsApp"
                   title="WhatsApp">
                   <MessageCircle className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -208,7 +326,8 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 {/* Facebook */}
                 <button
                   onClick={handleFacebook}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group"
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Facebook"
                   title="Facebook">
                   <Facebook className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -217,7 +336,8 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 {/* Twitter/X */}
                 <button
                   onClick={handleTwitter}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group"
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on X"
                   title="X">
                   <svg
@@ -231,7 +351,8 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 {/* Telegram */}
                 <button
                   onClick={handleTelegram}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group"
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Telegram"
                   title="Telegram">
                   <Send className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
@@ -240,10 +361,21 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
                 {/* Pinterest */}
                 <button
                   onClick={handlePinterest}
-                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group"
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
                   aria-label="Share on Pinterest"
                   title="Pinterest">
                   <Heart className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+                </button>
+
+                {/* QR Code */}
+                <button
+                  onClick={handleQRCode}
+                  disabled={isSharing}
+                  className="aspect-square rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center group disabled:opacity-50"
+                  aria-label="Generate QR Code"
+                  title="QR Code">
+                  <QrCode className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
                 </button>
               </div>
             </div>
@@ -285,6 +417,7 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       </div>
     </>
   );
+};
 };
 
 export default ShareProductSheet;
