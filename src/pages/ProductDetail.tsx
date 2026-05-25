@@ -25,6 +25,7 @@ import RecommendationSection from "@/components/RecommendationSection";
 import SizeGuideModal from "@/components/SizeGuideModal";
 import { useProduct, useAllProducts } from "@/hooks/useProducts";
 import { useProductVariants } from "@/hooks/useProductVariants";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductDetail = () => {
 	const { id } = useParams();
@@ -54,6 +55,7 @@ const ProductDetail = () => {
 	const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
 	const [isHeaderVisible, setIsHeaderVisible] = React.useState(true);
 	const [fullscreenIndex, setFullscreenIndex] = React.useState<number | null>(null);
+	const [requireWhiteBgForRecommendations, setRequireWhiteBgForRecommendations] = React.useState(true);
 
 	// Scroll detection and navbar visibility
 	const scrollState = useScrollDetection();
@@ -72,6 +74,31 @@ const ProductDetail = () => {
 			setIsHeaderVisible(true);
 		}
 	}, [scrollState.scrollDirection]);
+
+	// Load white background requirement setting
+	React.useEffect(() => {
+		const loadWhiteBgSetting = async () => {
+			try {
+				const { data, error } = await supabase
+					.from('admin_settings')
+					.select('value')
+					.eq('key', 'require_white_bg_for_recommendations')
+					.single();
+
+				if (error && error.code !== 'PGRST116') throw error;
+				
+				if (data) {
+					setRequireWhiteBgForRecommendations(data.value ?? true);
+				}
+			} catch (error) {
+				console.error('[ProductDetail] Failed to load white bg setting:', error);
+				// Default to true if setting not found
+				setRequireWhiteBgForRecommendations(true);
+			}
+		};
+
+		loadWhiteBgSetting();
+	}, []);
 
 
 
@@ -207,8 +234,8 @@ const ProductDetail = () => {
 	const styleWith = activeProducts
 		.filter((p) => {
 			if (p.id === product.id) return false;
-			// Only show products with white background
-			if (!p.has_white_background) return false;
+			// Only show products with white background if setting requires it
+			if (requireWhiteBgForRecommendations && !p.has_white_background) return false;
 			// Gender matching: same gender or unisex
 			const currentGender = product.gender?.toLowerCase() || '';
 			const pGender = p.gender?.toLowerCase() || '';
@@ -227,8 +254,8 @@ const ProductDetail = () => {
 	const youMayAlsoLike = activeProducts
 		.filter((p) => {
 			if (p.id === product.id) return false;
-			// Only show products with white background
-			if (!p.has_white_background) return false;
+			// Only show products with white background if setting requires it
+			if (requireWhiteBgForRecommendations && !p.has_white_background) return false;
 			const sameCategory = p.category?.toLowerCase() === product.category?.toLowerCase();
 			return sameCategory;
 		});

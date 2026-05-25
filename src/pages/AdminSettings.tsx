@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,26 +15,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle, Info } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, ArrowLeft } from "lucide-react";
+import { getRemoveBgCredits, isRemoveBgCreditsLow } from "@/lib/backgroundRemoval";
 
 interface SettingsData {
   bg_removal_enabled: boolean;
   removebg_api_key: string;
   bg_removal_fallback_order: string[];
   bg_removal_quality: "high" | "medium" | "low";
+  require_white_bg_for_recommendations: boolean;
 }
 
 export default function AdminSettings() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const creditsLow = creditsRemaining !== null && isRemoveBgCreditsLow();
 
   // Load settings on mount
   useEffect(() => {
     loadSettings();
+    checkCredits();
   }, []);
+
+  const checkCredits = () => {
+    const credits = getRemoveBgCredits();
+    setCreditsRemaining(credits);
+  };
 
   const loadSettings = async () => {
     try {
@@ -48,6 +60,7 @@ export default function AdminSettings() {
           "removebg_api_key",
           "bg_removal_fallback_order",
           "bg_removal_quality",
+          "require_white_bg_for_recommendations",
         ]);
 
       if (error) throw error;
@@ -66,6 +79,7 @@ export default function AdminSettings() {
           "client_side",
         ],
         bg_removal_quality: settingsMap.bg_removal_quality ?? "high",
+        require_white_bg_for_recommendations: settingsMap.require_white_bg_for_recommendations ?? true,
       });
 
       console.log("[AdminSettings] Settings loaded:", settingsMap);
@@ -105,16 +119,20 @@ export default function AdminSettings() {
           key: "bg_removal_quality",
           value: settings.bg_removal_quality,
         },
+        {
+          key: "require_white_bg_for_recommendations",
+          value: settings.require_white_bg_for_recommendations,
+        },
       ];
 
       for (const update of updates) {
         const { error } = await supabase
           .from("admin_settings")
-          .upsert({
-            key: update.key,
+          .update({
             value: update.value,
             updated_at: new Date().toISOString(),
-          });
+          })
+          .eq("key", update.key);
 
         if (error) throw error;
       }
@@ -159,11 +177,21 @@ export default function AdminSettings() {
 
   return (
     <div className="space-y-6 p-8 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Configure application behavior and integrations
-        </p>
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin")}
+          className="h-10 w-10"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Configure application behavior and integrations
+          </p>
+        </div>
       </div>
 
       {/* Background Removal Section */}
@@ -240,6 +268,35 @@ export default function AdminSettings() {
                     </AlertDescription>
                   </Alert>
                 )}
+              </div>
+
+              {/* Credits Display */}
+              <div className="space-y-3 pt-4 border-t">
+                <Label className="text-base font-medium">API Credits Status</Label>
+                <div className="flex items-center gap-3">
+                  {creditsRemaining !== null ? (
+                    <>
+                      <Badge 
+                        variant={creditsLow ? "destructive" : "secondary"}
+                        className="text-lg px-3 py-2"
+                      >
+                        {creditsRemaining} Credits Remaining
+                      </Badge>
+                      {creditsLow && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            Running low on credits! Consider upgrading your plan.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Credits will be tracked after the first background removal request
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Quality */}
@@ -331,6 +388,39 @@ export default function AdminSettings() {
               </div>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Recommendations Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Product Recommendations</CardTitle>
+          <CardDescription>
+            Control what products appear in recommendation sections
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* White Background Requirement */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">Require White Background Images</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Only show products with white background images in recommendation sections. 
+                When disabled, all products can appear.
+              </p>
+            </div>
+            <Button
+              variant={settings.require_white_bg_for_recommendations ? "default" : "outline"}
+              onClick={() =>
+                setSettings({
+                  ...settings,
+                  require_white_bg_for_recommendations: !settings.require_white_bg_for_recommendations,
+                })
+              }
+            >
+              {settings.require_white_bg_for_recommendations ? "Required" : "Optional"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

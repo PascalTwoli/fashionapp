@@ -81,9 +81,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	const [imagePreviews, setImagePreviews] = useState<string[]>(
 		initialData?.images || [],
 	);
-	const [whiteBackgroundImages, setWhiteBackgroundImages] = useState<boolean[]>(
-		initialData?.images?.map(() => false) || [],
-	);
+	const [whiteBackgroundImages, setWhiteBackgroundImages] = useState<boolean[]>(() => {
+		if (!initialData?.images) {
+			console.log("[ProductForm] whiteBackgroundImages init: no images", { initialData });
+			return [];
+		}
+		const indices = initialData.white_background_indices || [];
+		const result = initialData.images.map((_, idx) => indices.includes(idx));
+		console.log("[ProductForm] whiteBackgroundImages init with data", {
+			imageCount: initialData.images.length,
+			indicesArray: indices,
+			resultingBooleanArray: result,
+		});
+		return result;
+	});
 	const [isGooglePickerOpen, setIsGooglePickerOpen] = useState(false);
 	const [viewerOpen, setViewerOpen] = useState(false);
 	const [viewerIndex, setViewerIndex] = useState(0);
@@ -123,6 +134,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
 	// Update form when initialData changes (e.g., when variants are loaded)
 	useEffect(() => {
 		if (initialData) {
+			console.log("[ProductForm] initialData changed, updating form", {
+				productId: initialData.id,
+				imageCounts: initialData.images?.length,
+				whiteBackgroundIndices: initialData.white_background_indices,
+				hasWhiteBackground: initialData.has_white_background,
+			});
+			
 			reset({
 				...initialData,
 				status: initialData?.status || "active",
@@ -135,6 +153,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 			// Update local variants state
 			if (initialData.variants && Array.isArray(initialData.variants)) {
 				setVariants(initialData.variants as ProductVariantRow[]);
+			}
+			// Update image previews and white background checkboxes from initialData
+			if (initialData.images) {
+				console.log("[ProductForm] Syncing imagePreviews with initialData.images");
+				setImagePreviews(initialData.images);
+				
+				const indices = initialData.white_background_indices || [];
+				const whiteBackgroundArray = initialData.images.map((_, idx) => indices.includes(idx));
+				console.log("[ProductForm] Setting whiteBackgroundImages", {
+					imageCount: initialData.images.length,
+					indicesArray: indices,
+					resultingBooleanArray: whiteBackgroundArray,
+				});
+				setWhiteBackgroundImages(whiteBackgroundArray);
 			}
 		}
 	}, [initialData, reset]);

@@ -21,6 +21,8 @@ interface Product {
 	tags: string[] | null;
 	status: "active" | "draft" | "archived" | null;
 	is_featured: boolean | null;
+	white_background_indices?: number[] | null;
+	has_white_background?: boolean | null;
 	created_at: string;
 	updated_at: string;
 	variants?: Array<{
@@ -62,9 +64,23 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [productWithVariants, setProductWithVariants] = useState<Product | null>(null);
 	const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+	const [bgRemovalProgress, setBgRemovalProgress] = useState<{
+		message: string;
+		current: number;
+		total: number;
+		completed?: boolean;
+	} | null>(null);
 
 	// Fetch variants when product changes
 	useEffect(() => {
+		console.log("[EditProductDrawer] Product changed:", {
+			productId: product?.id,
+			name: product?.name,
+			images: product?.images?.length,
+			white_background_indices: product?.white_background_indices,
+			has_white_background: product?.has_white_background,
+		});
+		
 		if (!product) {
 			setProductWithVariants(null);
 			return;
@@ -121,8 +137,22 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 		if (!isOpen) {
 			setHasUnsavedChanges(false);
 			setShowConfirmClose(false);
+			setBgRemovalProgress(null);
 		}
 	}, [isOpen]);
+
+	// Listen for background removal progress events
+	useEffect(() => {
+		const handleProgress = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			setBgRemovalProgress(customEvent.detail);
+		};
+
+		window.addEventListener('bgRemovalProgress', handleProgress);
+		return () => {
+			window.removeEventListener('bgRemovalProgress', handleProgress);
+		};
+	}, []);
 
 	const handleClose = () => {
 		if (hasUnsavedChanges) {
@@ -208,6 +238,24 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 				{/* Scrollable form content */}
 				<div className="flex-1 overflow-y-auto">
 					<div className="px-6 py-6">
+					{bgRemovalProgress && (
+						<div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+							<div className="flex items-center gap-2 mb-2">
+								<div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+								<p className="font-medium text-blue-900">Processing Background Removal</p>
+							</div>
+							<p className="text-sm text-blue-700 mb-3">{bgRemovalProgress.message}</p>
+							<div className="w-full bg-blue-200 rounded-full h-2">
+								<div 
+									className="bg-blue-500 h-2 rounded-full transition-all"
+									style={{ width: `${(bgRemovalProgress.current / bgRemovalProgress.total) * 100}%` }}
+								></div>
+							</div>
+							<p className="text-xs text-blue-600 mt-2">
+								{bgRemovalProgress.current} of {bgRemovalProgress.total} images
+							</p>
+						</div>
+					)}
 					{isLoadingVariants ? (
 						<div className="text-center py-8 text-muted-foreground">
 							Loading variant inventory...
@@ -223,9 +271,6 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 					)}
 				</div>
 			</div>
-
-			{/* Sticky Footer */}
-			<div className="flex-shrink-0 border-t border-border bg-background/95 backdrop-blur-sm px-6 py-4 flex items-center gap-3">
 				{hasUnsavedChanges && !isLoadingVariants && (
 					<div className="flex items-center gap-2 text-xs text-amber-600 mr-auto">
 						<AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -262,9 +307,8 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 					{isLoadingVariants ? "Loading..." : isSubmitting ? "Saving..." : "Save Changes"}
 				</Button>
 			</div>
-		</div>
 
-		{/* Unsaved changes confirmation modal */}
+			{/* Unsaved changes confirmation modal */}
 			{showConfirmClose && (
 				<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
 					<div

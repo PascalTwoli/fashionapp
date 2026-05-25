@@ -9,6 +9,8 @@ interface Product {
   brand?: string;
   images?: string[] | null;
   image_url?: string;
+  white_background_indices?: number[] | null;
+  has_white_background?: boolean | null;
   price: number;
   discount_price?: number | null;
   status?: string;
@@ -40,7 +42,7 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
   }
 
   return (
-    <section className="border-t border-border">
+    <section className="border-t border-border pb-12">
       <div>
         {/* Section header */}
         <div className="mb-6 px-0 pt-12 lg:pt-24">
@@ -53,7 +55,7 @@ const RecommendationSection: React.FC<RecommendationSectionProps> = ({
         {/* Grid layout (desktop) or Horizontal scroll (mobile) */}
         {variant === 'grid' ? (
           // Grid - full width within parent constraint
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 gap-y-8 px-0">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 sm:gap-x-3 gap-y-4 px-0">
             {products.map((product) => (
               <ProductRecommendationCard
                 key={product.id}
@@ -91,7 +93,15 @@ const ProductRecommendationCard: React.FC<ProductRecommendationCardProps> = ({
   product,
   onProductClick,
 }) => {
-  const image = product.images?.[0] || product.image_url;
+  // Get the white background image if available, otherwise use primary image
+  let image: string | undefined;
+  if (product.white_background_indices && product.white_background_indices.length > 0 && product.images) {
+    const firstWhiteBgIndex = product.white_background_indices[0];
+    image = product.images[firstWhiteBgIndex] || product.images[0] || product.image_url;
+  } else {
+    image = product.images?.[0] || product.image_url;
+  }
+  
   const hasDiscount =
     product.discount_price && product.discount_price < product.price;
   const discountPercent = hasDiscount
@@ -104,8 +114,8 @@ const ProductRecommendationCard: React.FC<ProductRecommendationCardProps> = ({
     <div
       onClick={() => onProductClick(product.id)}
       className="cursor-pointer group">
-      {/* Image container */}
-      <div className="relative mb-3 overflow-hidden bg-muted aspect-[2/3]">
+      {/* Image container - transparent background for white bg images to blend seamlessly */}
+      <div className="relative mb-2 overflow-hidden bg-transparent aspect-[3/4]">
         {/* Image with hover zoom (desktop only) */}
         {image && (
           <img
@@ -118,34 +128,20 @@ const ProductRecommendationCard: React.FC<ProductRecommendationCardProps> = ({
 
       </div>
 
-      {/* Product info */}
-      <div className="space-y-1">
-        {/* Brand */}
-        {product.brand && (
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">
-            {product.brand}
-          </p>
-        )}
-
-        {/* Name */}
-        <h3 className="text-sm font-medium line-clamp-2 group-hover:text-foreground/80 transition-colors">
+      {/* Product info - center aligned */}
+      <div className="space-y-1 text-center">
+        {/* Name - truncated for compact display */}
+        <h3 className="text-xs font-medium line-clamp-1 group-hover:text-foreground/80 transition-colors">
           {product.name}
         </h3>
 
-        {/* Category */}
-        {product.category && (
-          <p className="text-xs text-muted-foreground capitalize">
-            {product.category}
-          </p>
-        )}
-
         {/* Pricing */}
-        <div className="flex items-baseline gap-2 pt-1">
-          <span className="text-sm font-medium">
+        <div className="flex items-baseline gap-1 pt-0.5 justify-center text-xs">
+          <span className="font-medium">
             KES {product.discount_price?.toLocaleString() || product.price.toLocaleString()}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-muted-foreground line-through">
               KES {product.price.toLocaleString()}
             </span>
           )}

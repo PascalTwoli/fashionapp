@@ -8,12 +8,23 @@ import Logo from "@/components/Logo";
 import { collections } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAllProducts, useCategories } from "@/hooks/useProducts";
+import { useScrollDetection } from "@/hooks/useScrollDetection";
+import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Home = () => {
 	const navigate = useNavigate();
 	const { totalItems } = useCart();
 	const [activeCategory, setActiveCategory] = useState("New In");
+
+	// Scroll detection and navbar visibility
+	const scrollState = useScrollDetection();
+	const { isNavbarVisible, handleScroll } = useNavbarVisibility();
+
+	// Update navbar visibility based on scroll
+	React.useEffect(() => {
+		handleScroll(scrollState.scrollDirection);
+	}, [scrollState.scrollDirection, handleScroll]);
 
 	// Fetch products and categories
 	const { data: allProducts = [], isLoading: productsLoading } =
@@ -211,7 +222,7 @@ const Home = () => {
 				</section>
 			</main>
 
-			<BottomNavigation />
+			<BottomNavigation isVisible={isNavbarVisible} />
 		</div>
 	);
 };

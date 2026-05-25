@@ -17,7 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatKES } from "@/lib/format";
-import { removeBackground, downloadProcessedImage } from "@/lib/backgroundRemoval";
+import { removeBackground, downloadProcessedImage, isRemoveBgCreditsLow, getRemoveBgCredits } from "@/lib/backgroundRemoval";
 import ProductForm from "./ProductForm";
 import EditProductDrawer from "./EditProductDrawer";
 import ImageViewer from "../ImageViewer";
@@ -133,6 +133,11 @@ const ProductManagement = () => {
 			console.log(
 				`[fetchProducts] Fetched ${(data || []).length} products from database`,
 			);
+			
+			// Log white_background_indices for first few products
+			(data || []).slice(0, 3).forEach((product: any) => {
+				console.log(`[fetchProducts] Product "${product.name}": white_background_indices = ${JSON.stringify(product.white_background_indices)}, has_white_background = ${product.has_white_background}`);
+			});
 
 			setProducts((data || []) as Product[]);
 
@@ -195,13 +200,22 @@ const ProductManagement = () => {
 				
 				const processedUrls = [...imageUrls];
 				
-				for (const index of white_background_indices) {
+				for (let i = 0; i < white_background_indices.length; i++) {
+					const index = white_background_indices[i];
 					if (index < processedUrls.length) {
 						try {
-							console.log(`[ProductManagement] Processing image at index ${index}...`);
+							const progressMsg = `Processing image ${i + 1} of ${white_background_indices.length}...`;
+							console.log(`[ProductManagement] ${progressMsg}`);
 							
 							const result = await removeBackground(processedUrls[index], {
 								throwOnError: false,
+								onProgress: (msg) => {
+									console.log(`[ProductManagement] Progress: ${msg}`);
+									// Emit progress event
+									window.dispatchEvent(new CustomEvent('bgRemovalProgress', { 
+										detail: { message: msg, current: i + 1, total: white_background_indices.length }
+									}));
+								},
 							});
 							
 							if (result.success) {
@@ -217,6 +231,16 @@ const ProductManagement = () => {
 								if (processedUrls_temp.length > 0) {
 									processedUrls[index] = processedUrls_temp[0];
 									console.log(`[ProductManagement] Processed image uploaded: ${processedUrls[index]}`);
+									
+									// Emit completion event
+									window.dispatchEvent(new CustomEvent('bgRemovalProgress', { 
+										detail: { 
+											message: `Completed image ${i + 1} of ${white_background_indices.length}`,
+											current: i + 1, 
+											total: white_background_indices.length,
+											completed: true 
+										}
+									}));
 								}
 							} else {
 								console.warn(`[ProductManagement] Background removal failed for image ${index}:`, result.error);
@@ -238,6 +262,16 @@ const ProductManagement = () => {
 				}
 				
 				imageUrls = processedUrls;
+
+				// Check if credits are running low
+				if (isRemoveBgCreditsLow()) {
+					const credits = getRemoveBgCredits();
+					toast({
+						title: "Low Credits Warning",
+						description: `You have only ${credits} remove.bg credits remaining. Consider upgrading your plan.`,
+						variant: "destructive",
+					});
+				}
 			}
 
 			// Build product data with explicit null handling
@@ -276,12 +310,14 @@ const ProductManagement = () => {
 
 			if (editingProduct) {
 				// Update product
+				console.log("[handleSubmit] Updating product:", editingProduct.id, "with data:", productData);
 				const { error } = await supabase
 					.from("products")
 					.update(productData)
 					.eq("id", editingProduct.id);
 
 				if (error) throw error;
+				console.log("[handleSubmit] Update successful for product:", editingProduct.id);
 
 				// Update variants if provided
 				if (variants && variants.length > 0) {
@@ -497,6 +533,13 @@ const ProductManagement = () => {
 	};
 
 	const startEdit = (product: Product) => {
+		console.log("[startEdit] Opening drawer with product:", {
+			productId: product.id,
+			name: product.name,
+			images: product.images?.length,
+			white_background_indices: product.white_background_indices,
+			has_white_background: product.has_white_background,
+		});
 		setEditingProduct(product);
 		setIsDrawerOpen(true);
 	};

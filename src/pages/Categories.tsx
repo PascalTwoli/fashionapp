@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCard from "@/components/ProductCard";
 import BottomNavigation from "@/components/BottomNavigation";
+import { useScrollDetection } from "@/hooks/useScrollDetection";
+import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import {
 	useAllProducts,
 	useCategories,
@@ -16,6 +18,15 @@ const Categories = () => {
 	const navigate = useNavigate();
 	const [query, setQuery] = useState("");
 	const [activeCategory, setActiveCategory] = useState<string>("All");
+
+	// Scroll detection and navbar visibility
+	const scrollState = useScrollDetection();
+	const { isNavbarVisible, handleScroll } = useNavbarVisibility();
+
+	// Update navbar visibility based on scroll
+	React.useEffect(() => {
+		handleScroll(scrollState.scrollDirection);
+	}, [scrollState.scrollDirection, handleScroll]);
 
 	// Fetch products and categories
 	const { data: allProducts = [], isLoading: productsLoading } =
@@ -138,7 +149,7 @@ const Categories = () => {
 				)}
 			</section>
 
-			<BottomNavigation />
+			<BottomNavigation isVisible={isNavbarVisible} />
 		</div>
 	);
 };
