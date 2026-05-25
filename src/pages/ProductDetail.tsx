@@ -18,6 +18,7 @@ import { useScrollDetection } from "@/hooks/useScrollDetection";
 import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import BottomNavigation from "@/components/BottomNavigation";
 import FloatingNavButton from "@/components/FloatingNavButton";
+import ShareProductSheet from "@/components/ShareProductSheet";
 import ProductInfo from "@/components/ProductInfo";
 import ProductOptions from "@/components/ProductOptions";
 import AddToCartButton from "@/components/AddToCartButton";
@@ -25,6 +26,8 @@ import RecommendationSection from "@/components/RecommendationSection";
 import SizeGuideModal from "@/components/SizeGuideModal";
 import { useProduct, useAllProducts } from "@/hooks/useProducts";
 import { useProductVariants } from "@/hooks/useProductVariants";
+import { generateProductSlug, generateProductUrl } from "@/lib/shareUtils";
+import { updateProductMetaTags, generateProductDescription } from "@/lib/metaTags";
 import { supabase } from "@/integrations/supabase/client";
 
 const ProductDetail = () => {
@@ -53,6 +56,7 @@ const ProductDetail = () => {
 	const [selectedSize, setSelectedSize] = React.useState("");
 	const [selectedColor, setSelectedColor] = React.useState("");
 	const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
+	const [isShareSheetOpen, setIsShareSheetOpen] = React.useState(false);
 	const [isHeaderVisible, setIsHeaderVisible] = React.useState(true);
 	const [fullscreenIndex, setFullscreenIndex] = React.useState<number | null>(null);
 	const [requireWhiteBgForRecommendations, setRequireWhiteBgForRecommendations] = React.useState(true);
@@ -99,6 +103,33 @@ const ProductDetail = () => {
 
 		loadWhiteBgSetting();
 	}, []);
+
+	// Update meta tags for social sharing when product loads
+	React.useEffect(() => {
+		if (!product || !product.id) return;
+
+		try {
+			const productSlug = generateProductSlug(product.name);
+			const productUrl = generateProductUrl(productSlug, product.id);
+			const productImage = product.images?.[0] || product.image_url || '';
+			const description = generateProductDescription(
+				product.name,
+				product.category,
+				product.brand,
+			);
+
+			updateProductMetaTags({
+				title: product.name,
+				description: description,
+				image: productImage,
+				url: productUrl,
+				price: product.discount_price ? product.discount_price.toString() : product.price.toString(),
+				brand: product.brand || 'FashionUp',
+			});
+		} catch (error) {
+			console.error('[ProductDetail] Failed to update meta tags:', error);
+		}
+	}, [product?.id]);
 
 
 
@@ -283,6 +314,7 @@ const ProductDetail = () => {
 					<Button
 						variant="ghost"
 						size="icon"
+						onClick={() => setIsShareSheetOpen(true)}
 						className="bg-background/80 rounded-full"
 						aria-label="Share">
 						<Share2 className="w-5 h-5" />
@@ -497,6 +529,16 @@ const ProductDetail = () => {
 			<SizeGuideModal
 				isOpen={isSizeGuideOpen}
 				onClose={() => setIsSizeGuideOpen(false)}
+			/>
+
+			<ShareProductSheet
+				isOpen={isShareSheetOpen}
+				onClose={() => setIsShareSheetOpen(false)}
+				productName={product.name}
+				productPrice={product.price}
+				discountPrice={product.discount_price}
+				productImage={product.images?.[0] || product.image_url || ''}
+				productUrl={generateProductUrl(generateProductSlug(product.name), product.id)}
 			/>
 
 				<AddToCartButton 
