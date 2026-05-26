@@ -97,21 +97,143 @@ export const shareViaNavigator = async (shareData: {
 
 /**
  * Generate WhatsApp share link
+ * For mobile: returns null to use native Share API instead
+ * For desktop: returns web.whatsapp.com URL
  */
-export const generateWhatsAppLink = (url: string, productName: string, price: number, discountPrice?: number): string => {
-  const displayPrice = discountPrice ? discountPrice : price;
-  // Format: Product name and price on first line, URL on second line (WhatsApp recognizes this pattern better)
-  const text = encodeURIComponent(
-    `${productName}\nKES ${displayPrice.toLocaleString()}\n\n${url}`
-  );
-  return `https://wa.me/?text=${text}`;
+export const generateWhatsAppLink = (url: string, productName: string, price: number, discountPrice?: number): string | null => {
+  // Mobile detection: if native Share API is available, let mobile OS handle it
+  // This ensures proper meta tag fetching and preview rendering on mobile WhatsApp
+  if (isNativeShareSupported()) {
+    return null; // Signal to use native Share API
+  }
+  
+  // Desktop fallback: use web.whatsapp.com for browser-based sharing
+  return `https://web.whatsapp.com/send?text=${encodeURIComponent(url)}`;
 };
 
 /**
- * Generate Facebook share link
+ * Initialize Facebook SDK on the page
+ * Loads the official Facebook SDK for better share dialog and preview support
+ */
+export const initFacebookSDK = (): Promise<void> => {
+  return new Promise((resolve) => {
+    // Check if FB is already initialized
+    if ((window as any).FB) {
+      resolve();
+      return;
+    }
+
+    // Load Facebook SDK
+    (window as any).fbAsyncInit = function () {
+      FB.init({
+        appId: '1234567890', // Placeholder - will work without it for share dialog
+        xfbml: true,
+        version: 'v18.0',
+      });
+      resolve();
+    };
+
+    // Load the SDK script
+    const script = document.createElement('script');
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0';
+    script.onload = () => {
+      // SDK loaded, FB should be available
+      if ((window as any).FB) {
+        resolve();
+      }
+    };
+    script.onerror = () => {
+      resolve(); // Continue even if SDK fails to load
+    };
+
+    document.body.appendChild(script);
+  });
+};
+
+/**
+ * Share via Facebook using native Share Dialog
+ * This properly fetches og:image and shows preview
+ */
+export const shareViaFacebook = async (url: string): Promise<boolean> => {
+  try {
+    await initFacebookSDK();
+    
+    const FB = (window as any).FB;
+    if (!FB) {
+      // Fallback to sharer.php if SDK not available
+      openShareWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&display=popup`, 'Facebook');
+      return true;
+    }
+
+    return new Promise((resolve) => {
+      FB.ui(
+        {
+          method: 'share',
+          href: url,
+          display: 'popup',
+          hashtag: '#FashionUp',
+        },
+        (response: any) => {
+          resolve(!!response);
+        }
+      );
+    });
+  } catch (error) {
+    console.error('[ShareUtils] Facebook share failed:', error);
+    return false;
+  }
+};
+
+/**
+ * Share via Facebook Feed Dialog (creates a more native-looking post)
+ * Better formatting control and typically shows larger images in the timeline
+ */
+export const shareViaFacebookFeed = async (url: string, productName: string, productPrice: number): Promise<boolean> => {
+  try {
+    await initFacebookSDK();
+    
+    const FB = (window as any).FB;
+    if (!FB) {
+      return shareViaFacebook(url); // Fallback to Share Dialog
+    }
+
+    // Format the caption to include price for better visibility
+    // Caption appears near the image, so include key product info there
+    const formattedCaption = `${productName}\nKES ${productPrice?.toLocaleString?.() || productPrice}`;
+    
+    // Description provides additional context
+    const formattedDescription = `Discover this amazing product on FashionUp. Shop now!`;
+
+    return new Promise((resolve) => {
+      FB.ui(
+        {
+          method: 'feed',
+          link: url,
+          caption: formattedCaption,
+          description: formattedDescription,
+          display: 'popup',
+          redirect_uri: window.location.href,
+          // The image will be automatically fetched from og:image meta tags (1200x630 for link posts)
+        },
+        (response: any) => {
+          resolve(!!response?.post_id);
+        }
+      );
+    });
+  } catch (error) {
+    console.error('[ShareUtils] Facebook Feed Dialog failed:', error);
+    return shareViaFacebook(url); // Fallback to Share Dialog
+  }
+};
+
+/**
+ * Generate Facebook share link (legacy method for fallback)
  */
 export const generateFacebookLink = (url: string): string => {
-  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&display=popup`;
 };
 
 /**

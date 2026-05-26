@@ -1,7 +1,7 @@
 /**
  * Vite Plugin: Meta Tag Injection for Product Pages
  * Intercepts product page requests and injects Open Graph meta tags
- * Works for both development and production
+ * Works for BOTH development AND production
  */
 
 import { Plugin } from 'vite';
@@ -15,7 +15,7 @@ const productCache = new Map();
 function initSupabase() {
   if (!supabase) {
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     
     if (supabaseUrl && supabaseKey) {
       supabase = createClient(supabaseUrl, supabaseKey);
@@ -91,16 +91,54 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
+/**
+ * Format image URL for proper crawler access
+ * Adds parameters to ensure proper caching and encoding
+ */
+function formatImageUrl(image: string): string {
+  if (!image) return '';
+  
+  // If image is a relative path or incomplete URL, make it absolute
+  if (!image.startsWith('http')) {
+    // If it's a Supabase storage path
+    if (image.includes('storage') || image.includes('public')) {
+      image = `https://aloberytextlgvwmivxg.supabase.co/storage/v1/object/public${image.startsWith('/') ? image : '/' + image}`;
+    }
+  }
+
+  // Add cache control for proper crawler handling
+  // This ensures the image is properly downloaded and cached by Meta crawlers
+  if (image.includes('supabase.co')) {
+    // Supabase URLs don't need transformation - they're already optimized
+    // But ensure we use the public access URL
+    if (!image.includes('/storage/v1/object/public/')) {
+      image = image.replace('/object/', '/object/public/');
+    }
+  }
+  
+  return image;
+}
+
 function generateMetaTagsHTML(product: any, url: string): string {
   const price = product.discount_price || product.price;
   const originalPrice = product.discount_price && product.discount_price < product.price
     ? product.price
     : undefined;
-  const image = product.images?.[0] || product.image_url || '';
+  
+  // Get image URL and ensure it's absolute
+  let image = product.images?.[0] || product.image_url || '';
+  image = formatImageUrl(image);
+  
+  // Fallback to a default image if none provided
+  if (!image) {
+    image = 'https://aloberytextlgvwmivxg.supabase.co/storage/v1/object/public/products/default-product.png';
+  }
 
   return `    <meta property="og:title" content="${escapeHtml(product.name)}" />
     <meta property="og:description" content="${escapeHtml(product.name)} - KES ${price?.toLocaleString?.() || price} | FashionUp" />
     <meta property="og:image" content="${image}" />
+    <meta property="og:image:secure_url" content="${image}" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${escapeHtml(product.name)}" />
@@ -126,7 +164,6 @@ function generateMetaTagsHTML(product: any, url: string): string {
 export default function metaTagInjectionPlugin(): Plugin {
   return {
     name: 'meta-tag-injection',
-    apply: 'serve',
     configResolved(config) {
       // Initialize Supabase when config is resolved
       initSupabase();

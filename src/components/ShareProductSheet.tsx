@@ -9,6 +9,8 @@ import {
   shareViaNavigator,
   generateWhatsAppLink,
   generateFacebookLink,
+  shareViaFacebook,
+  shareViaFacebookFeed,
   generateTwitterLink,
   generateTelegramLink,
   generatePinterestLink,
@@ -126,8 +128,24 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       setError(null);
       await createTrackedLink('whatsapp', '');
       const link = generateWhatsAppLink(productUrl, productName, productPrice, discountPrice);
-      openShareWindow(link, 'WhatsApp');
-      onClose();
+      
+      // If link is null, use native Share API (mobile)
+      if (link === null) {
+        const shared = await shareViaNavigator({
+          title: productName,
+          text: `${productName} - KES ${(discountPrice || productPrice).toLocaleString()}`,
+          url: productUrl,
+        });
+        if (shared) {
+          onClose();
+        } else {
+          setError('Share cancelled');
+        }
+      } else {
+        // Desktop: open web.whatsapp.com
+        openShareWindow(link, 'WhatsApp');
+        onClose();
+      }
     } catch (err) {
       setError('Failed to share on WhatsApp');
     }
@@ -136,12 +154,25 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
   const handleFacebook = async () => {
     try {
       setError(null);
+      setIsSharing(true);
       await createTrackedLink('facebook', '');
-      const link = generateFacebookLink(productUrl);
-      openShareWindow(link, 'Facebook');
-      onClose();
+      // Use Feed Dialog for better post formatting and larger image display
+      const shared = await shareViaFacebookFeed(productUrl, productName, productPrice);
+      setIsSharing(false);
+      
+      if (shared) {
+        toast({
+          title: 'Shared on Facebook!',
+          description: 'Your product has been shared',
+        });
+        onClose();
+      } else {
+        setError('Share cancelled or failed');
+      }
     } catch (err) {
+      setIsSharing(false);
       setError('Failed to share on Facebook');
+      console.error('[ShareSheet] Facebook share error:', err);
     }
   };
 

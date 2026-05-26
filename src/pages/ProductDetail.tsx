@@ -111,7 +111,16 @@ const ProductDetail = () => {
 		try {
 			const productSlug = generateProductSlug(product.name);
 			const productUrl = generateProductUrl(productSlug, product.id);
-			const productImage = product.images?.[0] || product.image_url || '';
+			
+			// Ensure image URL is absolute for social sharing
+			let productImage = product.images?.[0] || product.image_url || '';
+			if (productImage && !productImage.startsWith('http')) {
+				// Convert relative/Supabase paths to absolute URLs
+				if (productImage.includes('storage') || productImage.includes('public')) {
+					productImage = `https://aloberytextlgvwmivxg.supabase.co/storage/v1/object/public${productImage.startsWith('/') ? productImage : '/' + productImage}`;
+				}
+			}
+			
 			const description = generateProductDescription(
 				product.name,
 				product.category,
