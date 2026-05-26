@@ -10,7 +10,6 @@ import {
   generateWhatsAppLink,
   generateFacebookLink,
   shareViaFacebook,
-  shareViaFacebookFeed,
   generateTwitterLink,
   generateTelegramLink,
   generatePinterestLink,
@@ -156,8 +155,8 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       setError(null);
       setIsSharing(true);
       await createTrackedLink('facebook', '');
-      // Use Feed Dialog for better post formatting and larger image display
-      const shared = await shareViaFacebookFeed(productUrl, productName, productPrice);
+      // Use Share Dialog for proper og:image rendering without cropping
+      const shared = await shareViaFacebook(productUrl);
       setIsSharing(false);
       
       if (shared) {
