@@ -4,11 +4,22 @@ import { ArrowLeft, Trash2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/contexts/WishlistContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useScrollDetection } from '@/hooks/useScrollDetection';
+import { useNavbarVisibility } from '@/hooks/useNavbarVisibility';
 import { formatKES } from '@/lib/format';
 
 const Wishlist = () => {
   const navigate = useNavigate();
   const { wishlistItems, removeFromWishlist } = useWishlist();
+
+  // Scroll detection and navbar visibility
+  const scrollState = useScrollDetection();
+  const { isNavbarVisible, handleScroll } = useNavbarVisibility();
+
+  // Update navbar visibility based on scroll
+  React.useEffect(() => {
+    handleScroll(scrollState.scrollDirection);
+  }, [scrollState.scrollDirection, handleScroll]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -91,7 +102,7 @@ const Wishlist = () => {
         )}
       </div>
 
-      <BottomNavigation />
+      <BottomNavigation isVisible={isNavbarVisible} />
     </div>
   );
 };

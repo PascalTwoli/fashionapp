@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useScrollDetection } from '@/hooks/useScrollDetection';
+import { useNavbarVisibility } from '@/hooks/useNavbarVisibility';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +45,15 @@ const Profile = () => {
     full_name: profile?.full_name || '',
     avatar_url: profile?.avatar_url || '',
   });
+
+  // Scroll detection and navbar visibility
+  const scrollState = useScrollDetection();
+  const { isNavbarVisible, handleScroll } = useNavbarVisibility();
+
+  // Update navbar visibility based on scroll
+  React.useEffect(() => {
+    handleScroll(scrollState.scrollDirection);
+  }, [scrollState.scrollDirection, handleScroll]);
 
   React.useEffect(() => {
     if (!isLoading && !user) navigate('/login');
@@ -216,7 +227,7 @@ const Profile = () => {
         </p>
       </div>
 
-      <BottomNavigation />
+      <BottomNavigation isVisible={isNavbarVisible} />
 
       <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
         <AlertDialogContent>

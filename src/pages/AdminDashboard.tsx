@@ -6,7 +6,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, ShoppingCart, Users } from 'lucide-react';
+import { Plus, Package, ShoppingCart, Users, Settings } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
 import AdvancedOrderManagement from '@/components/admin/AdvancedOrderManagement';
 import { supabase } from '@/integrations/supabase/client';
@@ -135,6 +135,7 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="products">Product Management</TabsTrigger>
             <TabsTrigger value="orders">Order Management</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           
           <TabsContent value="products">
@@ -143,6 +144,16 @@ const AdminDashboard = () => {
           
           <TabsContent value="orders">
             <AdvancedOrderManagement />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Button
+              onClick={() => navigate('/admin/settings')}
+              className="gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Go to Settings
+            </Button>
           </TabsContent>
         </Tabs>
       </div>

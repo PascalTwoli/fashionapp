@@ -20,6 +20,7 @@ import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminSettings from "./pages/AdminSettings";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import NotFound from "./pages/NotFound";
 
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/orders" element={<OrderHistory />} />
                 <Route path="/orders/:id" element={<OrderDetails />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

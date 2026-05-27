@@ -7,6 +7,8 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { useCart } from "@/contexts/CartContext";
 import { useCartInventoryValidation } from "@/hooks/useCartInventoryValidation";
 import { useToast } from "@/hooks/use-toast";
+import { useScrollDetection } from "@/hooks/useScrollDetection";
+import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import { formatKES } from "@/lib/format";
 
 const ShoppingBagPage = () => {
@@ -14,6 +16,15 @@ const ShoppingBagPage = () => {
 	const { items, updateQuantity, removeFromCart, totalPrice, totalItems } =
 		useCart();
 	const { toast } = useToast();
+
+	// Scroll detection and navbar visibility
+	const scrollState = useScrollDetection();
+	const { isNavbarVisible, handleScroll } = useNavbarVisibility();
+
+	// Update navbar visibility based on scroll
+	React.useEffect(() => {
+		handleScroll(scrollState.scrollDirection);
+	}, [scrollState.scrollDirection, handleScroll]);
 
 	// Validate inventory on cart page load and when items change
 	const { validation, isChecking } = useCartInventoryValidation(items);
@@ -239,7 +250,7 @@ const ShoppingBagPage = () => {
 				</>
 			)}
 
-			<BottomNavigation />
+			<BottomNavigation isVisible={isNavbarVisible} />
 		</div>
 	);
 };
