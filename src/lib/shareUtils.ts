@@ -73,9 +73,9 @@ export const isNativeShareSupported = (): boolean => {
  * Falls back gracefully if unsupported
  */
 export const shareViaNavigator = async (shareData: {
-  title: string;
-  text: string;
-  url: string;
+  title?: string;
+  text?: string;
+  url?: string;
 }): Promise<boolean> => {
   if (!isNativeShareSupported()) {
     console.warn('[ShareUtils] Native Share API not supported');
@@ -100,15 +100,11 @@ export const shareViaNavigator = async (shareData: {
  * For mobile: returns null to use native Share API instead
  * For desktop: returns web.whatsapp.com URL
  */
-export const generateWhatsAppLink = (url: string, productName: string, price: number, discountPrice?: number): string | null => {
-  // Mobile detection: if native Share API is available, let mobile OS handle it
-  // This ensures proper meta tag fetching and preview rendering on mobile WhatsApp
-  if (isNativeShareSupported()) {
-    return null; // Signal to use native Share API
-  }
-  
-  // Desktop fallback: use web.whatsapp.com for browser-based sharing
-  return `https://web.whatsapp.com/send?text=${encodeURIComponent(url)}`;
+export const generateWhatsAppLink = (url: string, productName: string, price: number, discountPrice?: number): string => {
+  const displayPrice = discountPrice ? discountPrice : price;
+  // Fallback to rich text format since intent previews are unreliable. Include product & app info!
+  const text = `✨ *${productName}*\n💰 KES ${displayPrice.toLocaleString()}\n\nCheck out this product on *FashionUp* - your ultimate fashion shopping destination. Upgrade your wardrobe today!\n\n🛍️ Tap the link to shop:\n${url}`;
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
 };
 
 /**

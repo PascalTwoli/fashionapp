@@ -86,10 +86,13 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
     try {
       setError(null);
       setIsSharing(true);
+
+      const priceToUse = discountPrice ? discountPrice : productPrice;
+      const shareText = `✨ *${productName}*\n💰 KES ${priceToUse.toLocaleString()}\n\nCheck out this product on *FashionUp* - your ultimate fashion shopping destination. Upgrade your wardrobe today!\n\n🛍️ Tap the link to shop:\n${productUrl}`;
+      
       const success = await shareViaNavigator({
         title: productName,
-        text: `${productName} - KES ${discountPrice ? discountPrice.toLocaleString() : productPrice.toLocaleString()}`,
-        url: productUrl,
+        text: shareText
       });
       setIsSharing(false);
 
@@ -127,24 +130,8 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       setError(null);
       await createTrackedLink('whatsapp', '');
       const link = generateWhatsAppLink(productUrl, productName, productPrice, discountPrice);
-      
-      // If link is null, use native Share API (mobile)
-      if (link === null) {
-        const shared = await shareViaNavigator({
-          title: productName,
-          text: `${productName} - KES ${(discountPrice || productPrice).toLocaleString()}`,
-          url: productUrl,
-        });
-        if (shared) {
-          onClose();
-        } else {
-          setError('Share cancelled');
-        }
-      } else {
-        // Desktop: open web.whatsapp.com
-        openShareWindow(link, 'WhatsApp');
-        onClose();
-      }
+      openShareWindow(link, 'WhatsApp');
+      onClose();
     } catch (err) {
       setError('Failed to share on WhatsApp');
     }
