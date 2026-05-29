@@ -43,11 +43,11 @@ const Register = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
-          className="gap-2"
+          onClick={() => navigate('/')}
+          className="gap-2 text-xs uppercase tracking-wider"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          Back to Store
         </Button>
       </div>
 
