@@ -21,6 +21,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useUserAddresses, useAddAddress } from "@/hooks/useUserAddresses";
+import { useSavedPaymentMethods } from "@/hooks/useSavedPaymentMethods";
 import { createOrder } from "@/services/orders/orderService";
 import { formatKES } from "@/lib/format";
 import { Card } from "@/components/ui/card";
@@ -70,6 +71,7 @@ const Checkout = () => {
 	const { toast } = useToast();
 	const { data: savedAddresses } = useUserAddresses();
 	const { mutate: addAddress } = useAddAddress();
+	const { data: savedPaymentMethods = [] } = useSavedPaymentMethods();
 
 	const [step, setStep] = useState<CheckoutStep>("cart-review");
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -183,6 +185,16 @@ const Checkout = () => {
 			});
 			return;
 		}
+
+		// Pre-fill payment: saved default method takes priority, then address phone
+		const defaultMethod = savedPaymentMethods.find(m => m.is_default) ?? savedPaymentMethods[0];
+		setPaymentForm(prev => {
+			if (defaultMethod?.type === "mpesa" && defaultMethod.phone) {
+				return { ...prev, method: "mpesa", mpesaPhone: defaultMethod.phone };
+			}
+			// Fall back to address phone if no saved method
+			return { ...prev, mpesaPhone: prev.mpesaPhone || addressForm.phone };
+		});
 
 		setStep("payment");
 	};
@@ -419,7 +431,7 @@ const Checkout = () => {
 					</div>
 				</header>
 
-				<main className="px-4 pt-8 max-w-xl mx-auto">
+				<main className="px-4 pt-8 w-full">
 					{/* Success animation */}
 					<div className="flex justify-center mb-8">
 						<div className="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
@@ -537,7 +549,7 @@ const Checkout = () => {
 					</div>
 				</header>
 
-				<main className="px-4 pt-6 max-w-xl mx-auto">
+				<main className="px-4 pt-6 w-full">
 					{/* Items section - IMPROVED */}
 					<div className="mb-8">
 						<h2 className="text-eyebrow mb-4">Items ({items.length})</h2>
@@ -660,7 +672,7 @@ const Checkout = () => {
 					</div>
 				</header>
 
-				<main className="px-4 pt-6 max-w-xl mx-auto">
+				<main className="px-4 pt-6 w-full">
 					<form onSubmit={handleAddressSubmit} className="space-y-6">
 						{/* Saved addresses - IMPROVED */}
 						{savedAddresses && savedAddresses.length > 0 && (
@@ -946,7 +958,7 @@ const Checkout = () => {
 				</div>
 			</header>
 
-			<main className="px-4 pt-6 max-w-xl mx-auto">
+			<main className="px-4 pt-6 w-full">
 				<form onSubmit={handlePaymentSubmit} className="space-y-6">
 					{/* Payment method section */}
 					<div>
@@ -1026,15 +1038,46 @@ const Checkout = () => {
 						</div>
 					</div>
 
-					{/* M-Pesa form - IMPROVED */}
+					{/* M-Pesa form */}
 					{paymentForm.method === "mpesa" && (
 						<div className="space-y-4">
 							<div className="bg-blue-50 border border-blue-200 p-4 rounded-none">
 								<p className="text-xs text-blue-900 leading-relaxed">
-									📱 You will receive an STK Push on your phone. Enter your M-Pesa PIN
-									to complete payment.
+									📱 You will receive an STK Push on your phone. Enter your M-Pesa PIN to complete payment.
 								</p>
 							</div>
+
+							{/* Saved M-Pesa numbers as quick-select chips */}
+							{(() => {
+								const mpesaMethods = savedPaymentMethods.filter(m => m.type === "mpesa" && m.phone);
+								// Include address phone if different from saved methods
+								const addressPhone = addressForm.phone;
+								const addressPhoneAlreadySaved = mpesaMethods.some(m => m.phone === addressPhone);
+								const quickOptions = [
+									...mpesaMethods.map(m => ({ label: `${m.label} · ${m.phone}`, phone: m.phone! })),
+									...(!addressPhoneAlreadySaved && addressPhone ? [{ label: `Address phone · ${addressPhone}`, phone: addressPhone }] : []),
+								];
+								if (quickOptions.length === 0) return null;
+								return (
+									<div>
+										<p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Quick select</p>
+										<div className="flex flex-wrap gap-2">
+											{quickOptions.map(opt => (
+												<button
+													key={opt.phone}
+													type="button"
+													onClick={() => setPaymentForm({ ...paymentForm, mpesaPhone: opt.phone })}
+													className={`px-3 py-1.5 text-xs border transition-colors ${paymentForm.mpesaPhone === opt.phone ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground/40"}`}
+													disabled={isProcessing}
+												>
+													{opt.label}
+												</button>
+											))}
+										</div>
+									</div>
+								);
+							})()}
+
 							<div>
 								<Label htmlFor="mpesaPhone" className="text-xs font-medium">
 									M-Pesa Phone Number *
@@ -1042,17 +1085,13 @@ const Checkout = () => {
 								<Input
 									id="mpesaPhone"
 									type="tel"
-									placeholder="+254..."
+									placeholder="+254 or 07..."
 									value={paymentForm.mpesaPhone || ""}
-									onChange={(e) =>
-										setPaymentForm({
-											...paymentForm,
-											mpesaPhone: e.target.value,
-										})
-									}
+									onChange={(e) => setPaymentForm({ ...paymentForm, mpesaPhone: e.target.value })}
 									className="mt-1.5 rounded-none text-sm h-10"
 									disabled={isProcessing}
 								/>
+								<p className="text-xs text-muted-foreground mt-1">You can also type a different number above.</p>
 							</div>
 						</div>
 					)}

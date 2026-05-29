@@ -52,7 +52,7 @@ export const OrderHistory = () => {
 			{/* Content */}
 			<main className="px-4 pt-6">
 				{isLoading ? (
-					<div className="space-y-4 max-w-lg mx-auto">
+					<div className="space-y-4 w-full">
 						{[...Array(3)].map((_, i) => (
 							<div key={i} className="border border-border rounded-none p-4">
 								<Skeleton className="h-6 w-32 mb-3" />
@@ -62,7 +62,7 @@ export const OrderHistory = () => {
 						))}
 					</div>
 				) : orders.length === 0 ? (
-					<div className="max-w-lg mx-auto py-12 text-center">
+					<div className="w-full py-12 text-center">
 						<p className="text-muted-foreground mb-4">
 							You haven't placed any orders yet
 						</p>
@@ -73,7 +73,7 @@ export const OrderHistory = () => {
 						</Button>
 					</div>
 				) : (
-					<div className="space-y-3 max-w-lg mx-auto">
+					<div className="space-y-3 w-full">
 						{orders.map((order: any) => (
 							<button
 								key={order.id}
