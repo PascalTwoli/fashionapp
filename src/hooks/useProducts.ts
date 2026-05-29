@@ -298,11 +298,15 @@ export const useCategories = () => {
 					return [];
 				}
 
+				const toTitleCase = (s: string) =>
+					s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
 				const categories = Array.from(
 					new Set(
 						(data || [])
 							.map((item: any) => item.category)
-							.filter(Boolean),
+							.filter(Boolean)
+							.map(toTitleCase),
 					),
 				) as string[];
 
