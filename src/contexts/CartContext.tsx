@@ -4,20 +4,15 @@ import React, {
 	useState,
 	ReactNode,
 	useEffect,
+	useRef,
 	useMemo,
 } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-/**
- * CartItem represents a unique product variant in the shopping cart
- * id: Unique identifier for this cart entry (not product_id)
- * product_id: The product this item refers to
- * variant_id: The specific variant (size/color combination)
- * size & color: Identify the specific variant
- */
 export interface CartItem {
-	id: string; // Unique cart entry ID
-	product_id: string; // Product identifier
-	variant_id?: string; // Product variant ID for inventory tracking
+	id: string;
+	product_id: string;
+	variant_id?: string;
 	name: string;
 	price: number;
 	image: string;
@@ -28,7 +23,7 @@ export interface CartItem {
 
 interface CartContextType {
 	items: CartItem[];
-	addToCart: (item: Omit<CartItem, "id" | "quantity">) => void;
+	addToCart: (item: Omit<CartItem, "id" | "quantity">, qty?: number) => void;
 	removeFromCart: (cartItemId: string) => void;
 	updateQuantity: (cartItemId: string, quantity: number) => void;
 	clearCart: () => void;
@@ -39,186 +34,212 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Storage key
-const CART_STORAGE_KEY = "fashionup_cart";
+const CART_KEY = "fashionup_cart";
 
-/**
- * Generate a unique ID for a cart entry
- * Combines product_id, size, and color to create a unique identifier
- */
-export const generateCartItemId = (
-	product_id: string,
-	size: string,
-	color: string,
-): string => {
-	return `${product_id}-${size}-${color}`;
-};
+export const generateCartItemId = (product_id: string, size: string, color: string) =>
+	`${product_id}-${size}-${color}`;
 
-/**
- * Safely parse cart from localStorage
- * Returns empty array if parsing fails or data is corrupted
- */
-const loadCartFromStorage = (): CartItem[] => {
+const loadLocal = (): CartItem[] => {
 	try {
-		const stored = localStorage.getItem(CART_STORAGE_KEY);
-		if (!stored) return [];
-
-		const parsed = JSON.parse(stored);
-
-		// Validate the structure
-		if (!Array.isArray(parsed)) {
-			console.warn("Cart storage is corrupted, returning empty cart");
-			return [];
-		}
-
-		// Basic validation of cart items
-		const validItems = parsed.filter(
-			(item) =>
-				item.id &&
-				item.product_id &&
-				item.name &&
-				typeof item.price === "number" &&
-				item.image &&
-				item.size &&
-				item.color &&
-				typeof item.quantity === "number" &&
-				item.quantity >= 1,
+		const s = localStorage.getItem(CART_KEY);
+		if (!s) return [];
+		const parsed = JSON.parse(s);
+		if (!Array.isArray(parsed)) return [];
+		return parsed.filter(
+			(i) => i.id && i.product_id && i.name && typeof i.price === "number" && i.image && i.size && i.color && typeof i.quantity === "number" && i.quantity >= 1,
 		);
-
-		return validItems;
-	} catch (error) {
-		console.error("Failed to load cart from localStorage:", error);
+	} catch {
 		return [];
 	}
 };
 
-/**
- * Save cart to localStorage
- */
-const saveCartToStorage = (items: CartItem[]): void => {
-	try {
-		localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-	} catch (error) {
-		console.error("Failed to save cart to localStorage:", error);
+const saveLocal = (items: CartItem[]) => {
+	try { localStorage.setItem(CART_KEY, JSON.stringify(items)); } catch {}
+};
+
+const clearLocal = () => {
+	try { localStorage.removeItem(CART_KEY); } catch {}
+};
+
+const dbRowToCartItem = (row: any): CartItem => ({
+	id: generateCartItemId(row.product_id, row.size, row.color),
+	product_id: row.product_id,
+	variant_id: row.variant_id ?? undefined,
+	name: row.name,
+	price: Number(row.price),
+	image: row.image,
+	size: row.size,
+	color: row.color,
+	quantity: row.quantity,
+});
+
+// Merge local items into DB items — for same variant, take the higher quantity
+const mergeItems = (dbItems: CartItem[], localItems: CartItem[]): CartItem[] => {
+	const map = new Map<string, CartItem>();
+	for (const item of dbItems) map.set(item.id, item);
+	for (const item of localItems) {
+		const existing = map.get(item.id);
+		if (existing) {
+			map.set(item.id, { ...existing, quantity: Math.max(existing.quantity, item.quantity) });
+		} else {
+			map.set(item.id, item);
+		}
 	}
+	return Array.from(map.values());
 };
 
 export const useCart = () => {
-	const context = useContext(CartContext);
-	if (context === undefined) {
-		throw new Error("useCart must be used within a CartProvider");
-	}
-	return context;
+	const ctx = useContext(CartContext);
+	if (!ctx) throw new Error("useCart must be used within a CartProvider");
+	return ctx;
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [userId, setUserId] = useState<string | null>(null);
+	// Prevent writing back to DB/localStorage the items we just loaded from DB
+	const skipSync = useRef(false);
+	// Debounce timer for DB writes
+	const syncTimer = useRef<ReturnType<typeof setTimeout>>();
 
-	// Initialize cart from localStorage on mount
+	// Track auth state changes using Supabase directly (avoids circular dep with AuthContext)
 	useEffect(() => {
-		const loadedCart = loadCartFromStorage();
-		setItems(loadedCart);
-		setIsLoading(false);
+		supabase.auth.getSession().then(({ data: { session } }) => {
+			setUserId(session?.user?.id ?? null);
+		});
+		const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+			setUserId(session?.user?.id ?? null);
+		});
+		return () => subscription.unsubscribe();
 	}, []);
 
-	// Sync cart to localStorage whenever it changes
+	// Load cart whenever userId changes
 	useEffect(() => {
-		if (!isLoading) {
-			saveCartToStorage(items);
-		}
-	}, [items, isLoading]);
+		let cancelled = false;
 
-	const addToCart = (newItem: Omit<CartItem, "id" | "quantity">) => {
-		// Validate input - check all required fields are present
-		if (
-			!newItem.product_id ||
-			!newItem.name ||
-			typeof newItem.price !== "number" ||
-			!newItem.image ||
-			!newItem.size ||
-			!newItem.color
-		) {
-			console.warn("Invalid item data for addToCart:", newItem);
+		const load = async () => {
+			setIsLoading(true);
+			skipSync.current = true;
+
+			if (userId) {
+				// Logged in: load from DB, merge any existing localStorage items
+				try {
+					const { data } = await supabase
+						.from("cart_items")
+						.select("*")
+						.eq("user_id", userId);
+
+					if (cancelled) return;
+
+					const dbItems = (data || []).map(dbRowToCartItem);
+					const localItems = loadLocal();
+					const merged = localItems.length > 0 ? mergeItems(dbItems, localItems) : dbItems;
+
+					setItems(merged);
+					clearLocal(); // Local items are now in DB
+
+					// If there were local items to merge, persist them to DB
+					if (localItems.length > 0) {
+						await syncToDb(userId, merged);
+					}
+				} catch (err) {
+					console.error("[Cart] Failed to load from DB:", err);
+					if (!cancelled) setItems(loadLocal());
+				}
+			} else {
+				// Anonymous: use localStorage
+				setItems(loadLocal());
+			}
+
+			if (!cancelled) {
+				setIsLoading(false);
+				// Small delay before re-enabling sync to avoid writing what we just read
+				setTimeout(() => { skipSync.current = false; }, 100);
+			}
+		};
+
+		load();
+		return () => { cancelled = true; };
+	}, [userId]);
+
+	// Sync items to DB (debounced) or localStorage on every change
+	useEffect(() => {
+		if (isLoading || skipSync.current) return;
+
+		if (userId) {
+			clearTimeout(syncTimer.current);
+			syncTimer.current = setTimeout(() => {
+				syncToDb(userId, items);
+			}, 400);
+		} else {
+			saveLocal(items);
+		}
+
+		return () => clearTimeout(syncTimer.current);
+	}, [items, userId, isLoading]);
+
+	const addToCart = (newItem: Omit<CartItem, "id" | "quantity">, qty: number = 1) => {
+		if (!newItem.product_id || !newItem.name || typeof newItem.price !== "number" || !newItem.image || !newItem.size || !newItem.color) {
+			console.warn("[Cart] Invalid item:", newItem);
 			return;
 		}
-
-		setItems((prevItems) => {
-			// Generate cart ID based on product variant
-			const cartItemId = generateCartItemId(
-				newItem.product_id,
-				newItem.size,
-				newItem.color,
-			);
-
-			// Check if this variant already exists
-			const existingItemIndex = prevItems.findIndex(
-				(item) => item.id === cartItemId,
-			);
-
-			if (existingItemIndex > -1) {
-				// Item exists: increment quantity
-				const updatedItems = [...prevItems];
-				updatedItems[existingItemIndex].quantity += 1;
-				return updatedItems;
-			} else {
-				// New item: add to cart with quantity 1
-				return [
-					...prevItems,
-					{
-						...newItem,
-						id: cartItemId,
-						quantity: 1,
-					},
-				];
+		setItems((prev) => {
+			const cartItemId = generateCartItemId(newItem.product_id, newItem.size, newItem.color);
+			const idx = prev.findIndex((i) => i.id === cartItemId);
+			if (idx > -1) {
+				const updated = [...prev];
+				updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + qty };
+				return updated;
 			}
+			return [...prev, { ...newItem, id: cartItemId, quantity: qty }];
 		});
 	};
 
 	const removeFromCart = (cartItemId: string) => {
-		setItems((prevItems) =>
-			prevItems.filter((item) => item.id !== cartItemId),
-		);
+		setItems((prev) => prev.filter((i) => i.id !== cartItemId));
 	};
 
 	const updateQuantity = (cartItemId: string, quantity: number) => {
-		// Validate quantity
-		if (!Number.isInteger(quantity) || quantity < 1) {
-			console.warn("Invalid quantity:", quantity);
-			return;
-		}
-
-		setItems((prevItems) =>
-			prevItems.map((item) =>
-				item.id === cartItemId ? { ...item, quantity } : item,
-			),
-		);
+		if (!Number.isInteger(quantity) || quantity < 1) return;
+		setItems((prev) => prev.map((i) => i.id === cartItemId ? { ...i, quantity } : i));
 	};
 
-	const clearCart = () => {
-		setItems([]);
-	};
+	const clearCart = () => setItems([]);
 
-	// Memoize derived values to prevent unnecessary recalculations
-	const { totalPrice, totalItems } = useMemo(() => {
-		const price = items.reduce(
-			(sum, item) => sum + item.price * item.quantity,
-			0,
-		);
-		const count = items.reduce((sum, item) => sum + item.quantity, 0);
-		return { totalPrice: price, totalItems: count };
-	}, [items]);
+	const { totalPrice, totalItems } = useMemo(() => ({
+		totalPrice: items.reduce((s, i) => s + i.price * i.quantity, 0),
+		totalItems: items.reduce((s, i) => s + i.quantity, 0),
+	}), [items]);
 
-	const value: CartContextType = {
-		items,
-		addToCart,
-		removeFromCart,
-		updateQuantity,
-		clearCart,
-		totalPrice,
-		totalItems,
-		isLoading,
-	};
-
-	return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+	return (
+		<CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice, totalItems, isLoading }}>
+			{children}
+		</CartContext.Provider>
+	);
 };
+
+// ─── DB helpers ────────────────────────────────────────────────────────────────
+
+async function syncToDb(userId: string, items: CartItem[]) {
+	try {
+		// Delete all then re-insert is simplest and avoids partial-update edge cases
+		await supabase.from("cart_items").delete().eq("user_id", userId);
+		if (items.length === 0) return;
+		await supabase.from("cart_items").insert(
+			items.map((i) => ({
+				user_id: userId,
+				product_id: i.product_id,
+				variant_id: i.variant_id ?? null,
+				name: i.name,
+				price: i.price,
+				image: i.image,
+				size: i.size,
+				color: i.color,
+				quantity: i.quantity,
+			})),
+		);
+	} catch (err) {
+		console.error("[Cart] DB sync failed:", err);
+	}
+}

@@ -5,7 +5,17 @@ import {
 	Card,
 	CardContent,
 } from "@/components/ui/card";
-import { Plus, Edit, Trash2, Copy, Search, Filter, X as XIcon, Image as ImageIcon } from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Edit, Trash2, Search, X as XIcon, Image as ImageIcon, AlertCircle, Package, CheckCircle2, FileText, Archive, Zap, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -16,6 +26,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLowStockAlerts } from "@/hooks/useAdminOrders";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatKES } from "@/lib/format";
 import { removeBackground, downloadProcessedImage, isRemoveBgCreditsLow, getRemoveBgCredits } from "@/lib/backgroundRemoval";
 import ProductForm from "./ProductForm";
@@ -64,6 +77,10 @@ const ProductManagement = () => {
 	const [productVariants, setProductVariants] = useState<Record<string, any[]>>({});
 	const [imageViewerOpen, setImageViewerOpen] = useState(false);
 	const [imageViewerProduct, setImageViewerProduct] = useState<Product | null>(null);
+	const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+	const [showStockSheet, setShowStockSheet] = useState(false);
+
+	const { data: variantAlerts, isLoading: isLoadingAlerts } = useLowStockAlerts(5);
 
 	const categories = useMemo(
 		() => [...new Set(products.map((p) => p.category).filter(Boolean))].sort(),
@@ -115,6 +132,15 @@ const ProductManagement = () => {
 
 		return result;
 	}, [products, searchQuery, filterCategory, filterStatus, sortBy]);
+
+	const productStats = useMemo(() => ({
+		total: products.length,
+		active: products.filter(p => p.status === "active").length,
+		draft: products.filter(p => p.status === "draft").length,
+		archived: products.filter(p => p.status === "archived").length,
+		outOfStock: (variantAlerts || []).filter(v => v.stock_quantity === 0).length,
+		lowStock: (variantAlerts || []).filter(v => v.stock_quantity > 0 && v.stock_quantity <= 5).length,
+	}), [products, variantAlerts]);
 
 	useEffect(() => {
 		fetchProducts();
@@ -506,8 +532,6 @@ const ProductManagement = () => {
 	};
 
 	const handleDelete = async (productId: string) => {
-		if (!confirm("Are you sure you want to delete this product?")) return;
-
 		try {
 			const { error } = await supabase
 				.from("products")
@@ -516,19 +540,12 @@ const ProductManagement = () => {
 
 			if (error) throw error;
 
-			toast({
-				title: "Success",
-				description: "Product deleted successfully",
-			});
-
+			toast({ title: "Success", description: "Product deleted successfully" });
+			setProductToDelete(null);
 			await fetchProducts();
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Error deleting product:", error);
-			toast({
-				title: "Error",
-				description: "Failed to delete product",
-				variant: "destructive",
-			});
+			toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
 		}
 	};
 
@@ -556,14 +573,88 @@ const ProductManagement = () => {
 
 	return (
 		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex items-center justify-between">
-				<h2 className="text-2xl font-bold">Product Management</h2>
-				<Button onClick={() => setShowAddForm(true)} className="bg-foreground text-background">
-					<Plus className="w-4 h-4 mr-2" />
+			{/* Sticky section header — z-40 slides over admin header (z-30) as you scroll */}
+			<header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border flex items-center justify-between h-14">
+				<div>
+					<h1 className="font-display text-lg">Product Management</h1>
+					<p className="text-xs text-muted-foreground">Inventory & catalogue operations</p>
+				</div>
+				<Button size="sm" onClick={() => setShowAddForm(true)} className="bg-foreground text-background rounded-none text-xs uppercase tracking-wider">
+					<Plus className="w-4 h-4 mr-1" />
 					Add Product
 				</Button>
-			</div>
+			</header>
+
+			{/* Stats Cards — matches AnalyticsCards style */}
+			<section>
+				<h2 className="text-sm font-medium mb-4 uppercase tracking-wider text-muted-foreground">
+					Inventory Metrics
+				</h2>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					{[
+						{ label: "Total Products", value: productStats.total, icon: Package, color: "text-slate-600" },
+						{ label: "Active", value: productStats.active, icon: CheckCircle2, color: "text-green-600" },
+						{ label: "Draft", value: productStats.draft, icon: FileText, color: "text-slate-600" },
+						{ label: "Archived", value: productStats.archived, icon: Archive, color: "text-slate-600" },
+						{ label: "Variants Out of Stock", value: productStats.outOfStock, icon: AlertCircle, color: "text-red-600" },
+						{ label: "Variants Low Stock", value: productStats.lowStock, icon: Zap, color: "text-amber-600" },
+					].map(({ label, value, icon: Icon, color }) => (
+						<Card key={label} className="border-0 bg-white p-6 rounded-none shadow-sm hover:shadow-md transition-shadow">
+							<div className="flex items-start justify-between">
+								<div className="flex-1">
+									<p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{label}</p>
+									<p className="text-2xl font-display font-medium">{value}</p>
+								</div>
+								<Icon className={`w-5 h-5 ${color} opacity-60`} />
+							</div>
+						</Card>
+					))}
+				</div>
+			</section>
+
+			{/* Stock alerts — compact summary */}
+			<section>
+				{isLoadingAlerts ? (
+					<Card className="border-0 bg-amber-50 p-4 rounded-none">
+						<Skeleton className="h-6 w-48" />
+					</Card>
+				) : !variantAlerts || variantAlerts.length === 0 ? (
+					<Card className="border border-green-200 bg-green-50 p-4 rounded-none">
+						<div className="flex items-center gap-2">
+							<CheckCircle2 className="w-4 h-4 text-green-600" />
+							<p className="text-sm font-medium text-green-900">All variants in stock</p>
+						</div>
+					</Card>
+				) : (
+					<Card className="border border-amber-200 bg-amber-50 rounded-none">
+						<div className="flex items-center justify-between p-4">
+							<div className="flex items-center gap-3">
+								<AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+								<p className="text-sm text-amber-900">
+									{productStats.outOfStock > 0 && (
+										<span className="font-semibold text-red-700">{productStats.outOfStock} depleted</span>
+									)}
+									{productStats.outOfStock > 0 && productStats.lowStock > 0 && (
+										<span className="text-amber-700">, </span>
+									)}
+									{productStats.lowStock > 0 && (
+										<span className="font-semibold text-amber-700">{productStats.lowStock} low stock</span>
+									)}
+									<span className="text-amber-700 font-normal"> — variants need attention</span>
+								</p>
+							</div>
+							<Button
+								size="sm"
+								variant="outline"
+								className="rounded-none text-xs bg-white hover:bg-amber-50 flex-shrink-0 ml-4"
+								onClick={() => setShowStockSheet(true)}>
+								View All
+								<ChevronRight className="w-3 h-3 ml-1" />
+							</Button>
+						</div>
+					</Card>
+				)}
+			</section>
 
 			{/* Search & Filter Toolbar */}
 			<Card className="border-border">
@@ -768,7 +859,7 @@ const ProductManagement = () => {
 										<ImageIcon className="w-5 h-5" />
 									</button>
 									<button
-										onClick={() => handleDelete(product.id)}
+										onClick={() => setProductToDelete(product)}
 										title="Delete product"
 										className="p-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors">
 										<Trash2 className="w-5 h-5" />
@@ -850,7 +941,7 @@ const ProductManagement = () => {
 							<Button
 								size="sm"
 								variant="destructive"
-								onClick={() => handleDelete(product.id)}
+								onClick={() => setProductToDelete(product)}
 								className="flex-1 text-xs rounded-none">
 								<Trash2 className="w-3 h-3 mr-1" />
 								Delete
@@ -890,6 +981,97 @@ const ProductManagement = () => {
 					onClose={() => setImageViewerOpen(false)}
 				/>
 			)}
+
+			{/* Stock alerts sheet */}
+			<Sheet open={showStockSheet} onOpenChange={setShowStockSheet}>
+				<SheetContent className="w-full sm:max-w-md overflow-y-auto">
+					<SheetHeader className="mb-4">
+						<SheetTitle className="flex items-center gap-2">
+							<AlertCircle className="w-5 h-5 text-amber-600" />
+							Stock Alerts ({variantAlerts?.length ?? 0} variants)
+						</SheetTitle>
+					</SheetHeader>
+
+					{variantAlerts && variantAlerts.length > 0 && (
+						<div className="space-y-2">
+							{/* Depleted first */}
+							{variantAlerts.filter(v => v.stock_quantity === 0).length > 0 && (
+								<p className="text-xs uppercase tracking-wider font-semibold text-red-700 mb-1">
+									Depleted ({variantAlerts.filter(v => v.stock_quantity === 0).length})
+								</p>
+							)}
+							{variantAlerts.filter(v => v.stock_quantity === 0).map(item => {
+								const product = products.find(p => p.id === item.product_id);
+								return (
+									<div key={item.id} className="flex items-center gap-3 p-3 border border-red-200 bg-red-50">
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium truncate">{(item.products as any)?.name}</p>
+											<p className="text-xs text-muted-foreground">
+												{[item.size, item.color].filter(Boolean).join(" · ")}
+											</p>
+											<p className="text-xs font-semibold text-red-700 mt-0.5">Out of stock</p>
+										</div>
+										{product && (
+											<Button size="sm" variant="outline" className="rounded-none text-xs flex-shrink-0"
+												onClick={() => { setShowStockSheet(false); startEdit(product); }}>
+												<Edit className="w-3 h-3 mr-1" /> Edit
+											</Button>
+										)}
+									</div>
+								);
+							})}
+
+							{/* Low stock */}
+							{variantAlerts.filter(v => v.stock_quantity > 0).length > 0 && (
+								<p className="text-xs uppercase tracking-wider font-semibold text-amber-700 mt-4 mb-1">
+									Low Stock ({variantAlerts.filter(v => v.stock_quantity > 0).length})
+								</p>
+							)}
+							{variantAlerts.filter(v => v.stock_quantity > 0).map(item => {
+								const product = products.find(p => p.id === item.product_id);
+								return (
+									<div key={item.id} className="flex items-center gap-3 p-3 border border-amber-200 bg-amber-50">
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium truncate">{(item.products as any)?.name}</p>
+											<p className="text-xs text-muted-foreground">
+												{[item.size, item.color].filter(Boolean).join(" · ")}
+											</p>
+											<p className="text-xs font-semibold text-amber-700 mt-0.5">{item.stock_quantity} units left</p>
+										</div>
+										{product && (
+											<Button size="sm" variant="outline" className="rounded-none text-xs flex-shrink-0"
+												onClick={() => { setShowStockSheet(false); startEdit(product); }}>
+												<Edit className="w-3 h-3 mr-1" /> Edit
+											</Button>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</SheetContent>
+			</Sheet>
+
+			{/* Delete confirmation dialog */}
+			<AlertDialog open={!!productToDelete} onOpenChange={(open) => { if (!open) setProductToDelete(null); }}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete product?</AlertDialogTitle>
+						<AlertDialogDescription>
+							<span className="font-medium">{productToDelete?.name}</span> will be permanently deleted.
+							If it exists in orders it will be archived instead.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							onClick={() => productToDelete && handleDelete(productToDelete.id)}>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 };

@@ -78,17 +78,21 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-secondary p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-secondary">
+      {/* Fixed admin header — h-14 (56px), section sub-headers use sticky top-14 */}
+      <header className="sticky top-0 z-30 h-14 bg-background border-b border-border flex items-center">
+        <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your fashion store</p>
+            <h1 className="text-base font-bold">Admin Dashboard</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Manage your fashion store</p>
           </div>
-          <Button onClick={() => navigate('/')}>
+          <Button size="sm" variant="outline" onClick={() => navigate('/')}>
             Back to Store
           </Button>
         </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

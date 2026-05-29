@@ -34,7 +34,7 @@ const ProductDetail = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-	const { addToCart } = useCart();
+	const { addToCart, items: cartItems } = useCart();
 	const { toast } = useToast();
 
 	// Fetch single product
@@ -55,6 +55,7 @@ const ProductDetail = () => {
 
 	const [selectedSize, setSelectedSize] = React.useState("");
 	const [selectedColor, setSelectedColor] = React.useState("");
+	const [quantity, setQuantity] = React.useState(1);
 	const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
 	const [isShareSheetOpen, setIsShareSheetOpen] = React.useState(false);
 	const [isHeaderVisible, setIsHeaderVisible] = React.useState(true);
@@ -153,22 +154,43 @@ const ProductDetail = () => {
 		return Array.from(new Set(variants.map((v) => v.color))).sort();
 	}, [variants]);
 
-	// Get available sizes for selected color
+	// Get available sizes for selected color, accounting for what's already in the cart
 	const availableSizes = React.useMemo(() => {
 		if (!selectedColor) return [];
 		return Array.from(
 			new Set(
 				variants
-					.filter((v) => v.color === selectedColor && v.stock_quantity > 0)
+					.filter((v) => {
+						if (v.color !== selectedColor || v.stock_quantity <= 0) return false;
+						const cartQty = cartItems.find(
+							(i) => i.product_id === product?.id && i.size === v.size && i.color === v.color,
+						)?.quantity ?? 0;
+						return v.stock_quantity - cartQty > 0;
+					})
 					.map((v) => v.size),
 			),
 		).sort();
-	}, [selectedColor, variants]);
+	}, [selectedColor, variants, cartItems, product?.id]);
 
-	// Reset size when color changes
+	// Reset size and quantity when color changes
 	React.useEffect(() => {
 		setSelectedSize("");
+		setQuantity(1);
 	}, [selectedColor]);
+
+	// Reset quantity when size changes
+	React.useEffect(() => {
+		setQuantity(1);
+	}, [selectedSize]);
+
+	// How many of this exact variant the user already has in their cart
+	const cartQuantityForVariant = React.useMemo(() => {
+		if (!selectedSize || !selectedColor) return 0;
+		const match = cartItems.find(
+			(i) => i.product_id === product?.id && i.size === selectedSize && i.color === selectedColor,
+		);
+		return match?.quantity ?? 0;
+	}, [cartItems, product?.id, selectedSize, selectedColor]);
 
 	// Get selected variant for stock check
 	const selectedVariant = React.useMemo(() => {
@@ -178,8 +200,13 @@ const ProductDetail = () => {
 		);
 	}, [selectedSize, selectedColor, variants]);
 
+	// Stock remaining after subtracting what's already in the cart
+	const effectiveStock = selectedVariant
+		? Math.max(0, selectedVariant.stock_quantity - cartQuantityForVariant)
+		: 0;
+
 	const isVariantOutOfStock =
-		!selectedVariant || selectedVariant.stock_quantity <= 0;
+		!selectedVariant || selectedVariant.stock_quantity <= 0 || effectiveStock <= 0;
 
 	// Handle loading state
 	if (productLoading) {
@@ -240,8 +267,19 @@ const ProductDetail = () => {
 
 		if (isVariantOutOfStock) {
 			toast({
-				title: "Out of stock",
-				description: `${selectedColor} in size ${selectedSize} is not available.`,
+				title: cartQuantityForVariant > 0 ? "All stock is in your bag" : "Out of stock",
+				description: cartQuantityForVariant > 0
+					? `You already have all available stock of this variant in your bag.`
+					: `${selectedColor} in size ${selectedSize} is not available.`,
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (quantity > effectiveStock) {
+			toast({
+				title: "Not enough stock",
+				description: `Only ${effectiveStock} available. You already have ${cartQuantityForVariant} in your bag.`,
 				variant: "destructive",
 			});
 			return;
@@ -255,10 +293,10 @@ const ProductDetail = () => {
 			image: product.images?.[0] || product.image,
 			size: selectedSize,
 			color: selectedColor,
-		});
+		}, quantity);
 		toast({
 			title: "Added to bag",
-			description: `${product.name} (${selectedColor}, ${selectedSize})`,
+			description: `${product.name} (${selectedColor}, ${selectedSize})${quantity > 1 ? ` × ${quantity}` : ""}`,
 		});
 	};
 
@@ -397,8 +435,47 @@ const ProductDetail = () => {
 							setSelectedColor("");
 						}}
 						isOutOfStock={isVariantOutOfStock}
-						stockQuantity={selectedVariant?.stock_quantity}
+						stockQuantity={selectedVariant ? effectiveStock : undefined}
 					/>
+
+					{/* Quantity stepper — shown only after both color and size are selected and stock remains */}
+					{selectedColor && selectedSize && !isVariantOutOfStock && effectiveStock > 0 && (
+						<div className="px-4 pb-2">
+							<p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Quantity</p>
+							<div className="flex items-center gap-0 border border-border w-fit">
+								<button
+									type="button"
+									onClick={() => setQuantity(q => Math.max(1, q - 1))}
+									className="w-10 h-10 flex items-center justify-center text-lg hover:bg-secondary transition-colors disabled:opacity-30"
+									disabled={quantity <= 1}
+								>
+									−
+								</button>
+								<input
+									type="number"
+									min={1}
+									max={effectiveStock}
+									value={quantity}
+									onChange={e => {
+										const v = Math.max(1, Math.min(effectiveStock, parseInt(e.target.value) || 1));
+										setQuantity(v);
+									}}
+									className="w-12 h-10 text-center text-sm font-medium border-x border-border bg-background focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+								/>
+								<button
+									type="button"
+									onClick={() => setQuantity(q => Math.min(effectiveStock, q + 1))}
+									className="w-10 h-10 flex items-center justify-center text-lg hover:bg-secondary transition-colors disabled:opacity-30"
+									disabled={quantity >= effectiveStock}
+								>
+									+
+								</button>
+							</div>
+							{quantity >= effectiveStock && (
+								<p className="text-xs text-amber-600 mt-1">Maximum available quantity selected</p>
+							)}
+						</div>
+					)}
 
 					{/* Service highlights */}
 					<section className="divide-y divide-border">

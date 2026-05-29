@@ -69,14 +69,12 @@ function generateMetaTagsHTML(product: any, productUrl: string): string {
 
   console.log('[ProductAPI] Using image URL:', image);
 
-  // Facebook Feed Dialog crops images to specific ratios
-  // Using 4:5 aspect ratio (vertical) which is optimal for Feed Dialog
-  // This gives more padding without being too extreme
-  // 4:5 ratio = 800:1000
-  const imageWidth = '800';
-  const imageHeight = '1000';
+    // Reverting to original image URL without transformations, keeping 1:1 dummy aspect ratio tags
+    // so copy-pasting gives the best possible view.
+    const imageWidth = '1146';
+    const imageHeight = '1146';
 
-  return `    <meta property="og:title" content="${escapeHtml(product.name)}" />
+    return `    <meta property="og:title" content="${escapeHtml(product.name)}" />
     <meta property="og:description" content="${escapeHtml(product.name)} - KES ${price?.toLocaleString?.() || price} | FashionUp" />
     <meta property="og:type" content="product" />
     <meta property="og:url" content="${productUrl}" />
@@ -216,8 +214,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Generate meta tags
     const metaTags = generateMetaTagsHTML(product, productUrl);
 
+    // Remove any existing generic og/twitter meta tags to prevent duplicates that confuse scrapers like WhatsApp
+    let cleanHtml = html.replace(/<meta\s+(?:property|name)=["'](?:og|twitter):[^"']+["']\s+content=["'][^"']*["']\s*\/?>/gi, '');
+    cleanHtml = cleanHtml.replace(/<title>.*?<\/title>/i, `<title>${escapeHtml(product.name)} | FashionUp</title>`);
+
     // Inject meta tags into HTML
-    const modifiedHtml = html.replace('</head>', `${metaTags}\n  </head>`);
+    const modifiedHtml = cleanHtml.replace('</head>', `${metaTags}\n  </head>`);
 
     // Set cache control headers - shorter cache for product pages so Facebook picks up changes
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

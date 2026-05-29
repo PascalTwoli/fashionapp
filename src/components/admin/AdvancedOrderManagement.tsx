@@ -4,9 +4,6 @@
  */
 
 import React, { useState, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,7 +32,6 @@ import { OrderDetailsDrawer } from "./orders/OrderDetailsDrawer";
 import { AdminOrder, OrderFilters, OrderStatusType } from "@/types/admin";
 
 const AdminOrderManagement = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -154,28 +150,13 @@ const AdminOrderManagement = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-md border-b border-border z-30">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/admin")}
-              className="h-10 w-10 rounded-none">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="font-display text-lg">Order Management</h1>
-              <p className="text-xs text-muted-foreground">Professional operations dashboard</p>
-            </div>
+      {/* Section header — z-40 covers the admin header (z-30) as you scroll */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="flex items-center p-4">
+          <div>
+            <h1 className="font-display text-lg">Order Management</h1>
+            <p className="text-xs text-muted-foreground">Professional operations dashboard</p>
           </div>
-          <Button
-            onClick={() => navigate("/admin")}
-            variant="outline"
-            className="rounded-none text-xs uppercase tracking-wider">
-            Back to Dashboard
-          </Button>
         </div>
       </header>
 

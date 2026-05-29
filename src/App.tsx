@@ -22,6 +22,9 @@ import OrderDetails from "./pages/OrderDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
+import ResetPassword from "./pages/ResetPassword";
+import Addresses from "./pages/Addresses";
+import PaymentMethods from "./pages/PaymentMethods";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +54,9 @@ const App = () => (
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/addresses" element={<Addresses />} />
+                <Route path="/payment-methods" element={<PaymentMethods />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

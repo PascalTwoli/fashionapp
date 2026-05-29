@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Home = () => {
 	const navigate = useNavigate();
 	const { totalItems } = useCart();
-	const [activeCategory, setActiveCategory] = useState("New In");
+	const [activeCategory, setActiveCategory] = useState("All");
 
 	// Scroll detection and navbar visibility
 	const scrollState = useScrollDetection();
@@ -31,10 +31,20 @@ const Home = () => {
 		useAllProducts();
 	const { data: categories = [] } = useCategories();
 
-	// Show active products, and archived with placeholder (draft is completely hidden)
-	const products = allProducts.filter(
-		(p) => p.status === "active" || p.status === "archived" || !p.status,
+	const toTitleCase = (s: string) =>
+		s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+	// Show active products only (draft/archived hidden from store)
+	const visibleProducts = allProducts.filter(
+		(p) => p.status === "active" || !p.status,
 	);
+
+	// Filter by active category (case-insensitive via title-case normalization)
+	const products = activeCategory === "All"
+		? visibleProducts
+		: visibleProducts.filter(
+			(p) => p.category && toTitleCase(p.category) === activeCategory,
+		);
 
 	return (
 		<div className="min-h-screen bg-background overflow-hidden flex flex-col">

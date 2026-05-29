@@ -48,7 +48,7 @@ export const OrderDetails = () => {
 					</div>
 				</header>
 				<main className="px-4 pt-6">
-					<div className="space-y-4 max-w-lg mx-auto">
+					<div className="space-y-4 w-full">
 						{[...Array(5)].map((_, i) => (
 							<Skeleton key={i} className="h-16 w-full" />
 						))}
@@ -91,7 +91,7 @@ export const OrderDetails = () => {
 			</header>
 
 			{/* Content */}
-			<main className="px-4 pt-6 max-w-lg mx-auto">
+			<main className="px-4 pt-6 w-full">
 				{/* Order Number & Status */}
 				<Card className="p-4 mb-6 border-0 bg-secondary/50">
 					<div className="space-y-3">

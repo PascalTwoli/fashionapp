@@ -11,6 +11,7 @@ import {
   OrderStatusType,
   AdminOrderNote,
 } from "@/types/admin";
+import { restoreOrderInventory } from "@/lib/inventoryOperations";
 
 /**
  * Fetch orders with advanced filtering, searching, and pagination
@@ -168,6 +169,14 @@ export const updateOrderStatus = async (
       .eq("id", orderId);
 
     if (updateError) throw updateError;
+
+    // Restore inventory when an order is cancelled or refunded
+    if (newStatus === "cancelled" || newStatus === "refunded") {
+      const { errors } = await restoreOrderInventory(orderId);
+      if (errors.length > 0) {
+        console.warn("Some stock restorations failed:", errors);
+      }
+    }
 
     // Create timeline entry
     const { error: timelineError } = await supabase
