@@ -142,6 +142,62 @@ export const reduceVariantStock = async (
 };
 
 /**
+ * Restore (increment) stock for a variant — used on order cancel/refund
+ */
+export const restoreVariantStock = async (
+	variantId: string,
+	quantity: number,
+): Promise<{ success: boolean; error?: string }> => {
+	try {
+		const { data: variant, error: fetchError } = await supabase
+			.from("product_variants")
+			.select("stock_quantity")
+			.eq("id", variantId)
+			.maybeSingle();
+
+		if (fetchError) return { success: false, error: fetchError.message };
+		if (!variant) return { success: false, error: "Variant not found" };
+
+		const { error: updateError } = await supabase
+			.from("product_variants")
+			.update({ stock_quantity: variant.stock_quantity + quantity })
+			.eq("id", variantId);
+
+		if (updateError) return { success: false, error: updateError.message };
+		return { success: true };
+	} catch (error) {
+		return { success: false, error: error instanceof Error ? error.message : String(error) };
+	}
+};
+
+/**
+ * Restore stock for all items in an order — called when order is cancelled or refunded
+ */
+export const restoreOrderInventory = async (
+	orderId: string,
+): Promise<{ success: boolean; errors: string[] }> => {
+	const errors: string[] = [];
+
+	const { data: items, error } = await supabase
+		.from("order_items")
+		.select("variant_id, quantity, product_name")
+		.eq("order_id", orderId);
+
+	if (error) return { success: false, errors: [error.message] };
+	if (!items || items.length === 0) return { success: true, errors: [] };
+
+	for (const item of items) {
+		if (!item.variant_id) continue;
+		const result = await restoreVariantStock(item.variant_id, item.quantity ?? 1);
+		if (!result.success) {
+			errors.push(`Failed to restore stock for ${item.product_name}: ${result.error}`);
+		}
+	}
+
+	return { success: errors.length === 0, errors };
+};
+
+/**
  * Reduce stock for multiple items (used after order creation)
  */
 export const reduceCartItemsStock = async (
