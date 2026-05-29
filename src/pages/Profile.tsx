@@ -102,8 +102,8 @@ const Profile = () => {
   const menuItems = [
     { icon: ShoppingBag, label: 'Orders', onClick: () => navigate('/orders') },
     { icon: Heart, label: 'Saved items', onClick: () => navigate('/wishlist') },
-    { icon: MapPin, label: 'Addresses', onClick: () => {} },
-    { icon: CreditCard, label: 'Payment methods', onClick: () => {} },
+    { icon: MapPin, label: 'Addresses', onClick: () => navigate('/addresses') },
+    { icon: CreditCard, label: 'Payment methods', onClick: () => navigate('/payment-methods') },
     { icon: HelpCircle, label: 'Help & support', onClick: () => {} },
   ];
 
