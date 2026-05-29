@@ -19,6 +19,7 @@ import ResizableGoogleDrivePicker from "@/components/ResizableGoogleDrivePicker"
 import ImageViewer from "@/components/ImageViewer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
 
 const productSchema = z.object({
 	name: z.string().min(2, "Product name must be at least 2 characters"),
@@ -77,6 +78,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
 	const { user } = useAuth();
 	const { isAdmin } = useUserRole();
+
+	// Fetch existing categories for suggestions
+	const [existingCategories, setExistingCategories] = useState<string[]>([]);
+	useEffect(() => {
+		supabase
+			.from("products")
+			.select("category")
+			.not("category", "is", null)
+			.then(({ data }) => {
+				if (!data) return;
+				const toTitleCase = (s: string) =>
+					s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+				const unique = Array.from(new Set(data.map((r: any) => r.category).filter(Boolean).map(toTitleCase))).sort();
+				setExistingCategories(unique as string[]);
+			});
+	}, []);
+
 	const [imageFiles, setImageFiles] = useState<File[]>([]);
 	const [imagePreviews, setImagePreviews] = useState<string[]>(
 		initialData?.images || [],
@@ -451,10 +469,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
 					<Label htmlFor="category">Category *</Label>
 					<Input
 						id="category"
-						placeholder="Shoes"
+						list="category-suggestions"
+						placeholder="e.g. Shoes"
 						{...register("category")}
+						onChange={(e) => {
+							const toTitleCase = (s: string) =>
+								s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+							setValue("category", toTitleCase(e.target.value), { shouldValidate: true });
+						}}
 						disabled={isLoading}
+						autoComplete="off"
 					/>
+					<datalist id="category-suggestions">
+						{existingCategories.map((cat) => (
+							<option key={cat} value={cat} />
+						))}
+					</datalist>
 					{errors.category && (
 						<p className="text-red-500 text-sm mt-1">
 							{errors.category.message}
