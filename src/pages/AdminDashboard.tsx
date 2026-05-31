@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, ShoppingCart, Users, Settings } from 'lucide-react';
+import { Plus, Package, ShoppingCart, Users, Settings, Truck, CreditCard, Smartphone, ImageIcon, ChevronRight } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
 import AdvancedOrderManagement from '@/components/admin/AdvancedOrderManagement';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ const AdminDashboard = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  const location = useLocation();
+  const defaultTab = (location.state as any)?.tab ?? "products";
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -135,7 +137,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Management Tabs */}
-        <Tabs defaultValue="products" className="space-y-4">
+        <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="products">Product Management</TabsTrigger>
             <TabsTrigger value="orders">Order Management</TabsTrigger>
@@ -151,13 +153,52 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <Button
-              onClick={() => navigate('/admin/settings')}
-              className="gap-2"
-            >
-              <Settings className="w-4 h-4" />
-              Go to Settings
-            </Button>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground mb-4">
+                Select a settings category to configure.
+              </p>
+              {[
+                {
+                  icon: Truck,
+                  title: "Shipping",
+                  description: "Delivery fees and free shipping threshold",
+                  href: "/admin/settings/shipping",
+                },
+                {
+                  icon: CreditCard,
+                  title: "Payment Methods",
+                  description: "Enable or disable checkout payment options",
+                  href: "/admin/settings/payment-methods",
+                },
+                {
+                  icon: Smartphone,
+                  title: "M-Pesa / Daraja",
+                  description: "Safaricom STK Push API credentials and environment",
+                  href: "/admin/settings/daraja",
+                },
+                {
+                  icon: ImageIcon,
+                  title: "Image Processing",
+                  description: "Background removal and product recommendation rules",
+                  href: "/admin/settings/image-processing",
+                },
+              ].map(({ icon: Icon, title, description, href }) => (
+                <button
+                  key={href}
+                  onClick={() => navigate(href)}
+                  className="w-full flex items-center gap-4 p-4 bg-background border border-border rounded-none hover:bg-secondary/50 transition-colors text-left"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -34,6 +34,7 @@ interface OrderWithCustomer {
 	order_number: string;
 	status: string;
 	payment_status: string;
+	payment_method: string;
 	total_amount: number;
 	customer_email: string;
 	shipping_first_name: string;
@@ -53,6 +54,8 @@ export const AdminOrderManagement = () => {
 	);
 	const [newStatus, setNewStatus] = useState<string>("");
 	const [isUpdating, setIsUpdating] = useState(false);
+	const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+	const [isConfirmingCOD, setIsConfirmingCOD] = useState(false);
 
 	// Fetch all orders
 	const { data: orders = [], isLoading, refetch } = useQuery({
@@ -112,6 +115,92 @@ export const AdminOrderManagement = () => {
 			console.error("Error updating order:", error);
 		} finally {
 			setIsUpdating(false);
+		}
+	};
+
+	// Admin confirms a COD order: updates status + deducts inventory
+	const handleConfirmCODOrder = async () => {
+		if (!selectedOrder) return;
+		setIsConfirmingCOD(true);
+		try {
+			const adminId = (await supabase.auth.getUser()).data.user?.id;
+
+			// 1. Confirm the order (admin RLS allows this)
+			const { error: orderErr } = await supabase
+				.from("orders")
+				.update({ status: "confirmed", updated_at: new Date().toISOString() })
+				.eq("id", selectedOrder.id);
+			if (orderErr) throw orderErr;
+
+			// 2. Fetch order items and deduct inventory
+			const { data: orderItems } = await supabase
+				.from("order_items")
+				.select("variant_id, quantity")
+				.eq("order_id", selectedOrder.id);
+
+			if (orderItems) {
+				for (const item of orderItems) {
+					if (!item.variant_id) continue;
+					const { data: variant } = await supabase
+						.from("product_variants")
+						.select("stock_quantity")
+						.eq("id", item.variant_id)
+						.maybeSingle();
+					if (variant) {
+						await supabase
+							.from("product_variants")
+							.update({ stock_quantity: Math.max(0, variant.stock_quantity - item.quantity) })
+							.eq("id", item.variant_id);
+					}
+				}
+			}
+
+			// 3. Timeline entry
+			await supabase.from("order_timeline").insert({
+				order_id: selectedOrder.id,
+				status: "confirmed",
+				note: "Order confirmed by admin. Stock reserved.",
+				created_by: adminId,
+			});
+
+			await refetch();
+			setSelectedOrder(null);
+		} catch (err) {
+			console.error("Error confirming COD order:", err);
+		} finally {
+			setIsConfirmingCOD(false);
+		}
+	};
+
+	// Admin marks COD payment as collected
+	const handleMarkCODPaid = async () => {
+		if (!selectedOrder) return;
+		setIsMarkingPaid(true);
+		try {
+			const adminId = (await supabase.auth.getUser()).data.user?.id;
+
+			const { error } = await supabase
+				.from("orders")
+				.update({
+					payment_status: "paid",
+					updated_at: new Date().toISOString(),
+				})
+				.eq("id", selectedOrder.id);
+			if (error) throw error;
+
+			await supabase.from("order_timeline").insert({
+				order_id: selectedOrder.id,
+				status: "confirmed",
+				note: "Cash on Delivery payment collected by admin.",
+				created_by: adminId,
+			});
+
+			await refetch();
+			setSelectedOrder(null);
+		} catch (err) {
+			console.error("Error marking COD as paid:", err);
+		} finally {
+			setIsMarkingPaid(false);
 		}
 	};
 
@@ -337,6 +426,45 @@ export const AdminOrderManagement = () => {
 									{isUpdating ? "Updating..." : "Update Status"}
 								</Button>
 							</div>
+
+							{/* COD Step 1: Confirm Order (pending → confirmed, stock deducted) */}
+							{selectedOrder.payment_method === "cash_on_delivery" &&
+								selectedOrder.status === "pending" && (
+								<div className="bg-blue-50 border border-blue-200 p-3 rounded-none space-y-2">
+									<p className="text-xs font-medium text-blue-900">
+										Cash on Delivery — awaiting confirmation
+									</p>
+									<p className="text-xs text-blue-700">
+										Confirm only after verifying the customer. This will reserve stock.
+									</p>
+									<Button
+										onClick={handleConfirmCODOrder}
+										disabled={isConfirmingCOD}
+										className="w-full h-9 bg-blue-700 hover:bg-blue-800 text-white rounded-none text-xs uppercase tracking-wider">
+										{isConfirmingCOD ? "Confirming..." : "Confirm Order"}
+									</Button>
+								</div>
+							)}
+
+							{/* COD Step 2: Mark as Paid (confirmed → payment collected) */}
+							{selectedOrder.payment_method === "cash_on_delivery" &&
+								selectedOrder.status === "confirmed" &&
+								selectedOrder.payment_status === "pending" && (
+								<div className="bg-amber-50 border border-amber-200 p-3 rounded-none space-y-2">
+									<p className="text-xs font-medium text-amber-900">
+										Cash on Delivery — payment pending
+									</p>
+									<p className="text-xs text-amber-700">
+										Mark as paid once cash has been collected on delivery.
+									</p>
+									<Button
+										onClick={handleMarkCODPaid}
+										disabled={isMarkingPaid}
+										className="w-full h-9 bg-green-700 hover:bg-green-800 text-white rounded-none text-xs uppercase tracking-wider">
+										{isMarkingPaid ? "Updating..." : "Mark as Paid"}
+									</Button>
+								</div>
+							)}
 
 							{/* Current status */}
 							<div>
