@@ -15,11 +15,15 @@ export interface CreateOrderParams {
   shipping_first_name: string;
   shipping_last_name: string;
   shipping_address: string;
+  shipping_address_2?: string;
   shipping_city: string;
   shipping_county: string;
   shipping_country: string;
+  shipping_postcode?: string;
   payment_method: "mpesa" | "card" | "cash_on_delivery";
   delivery_instructions?: string;
+  /** Pre-calculated shipping fee from useShippingSettings. Overrides the hardcoded fallback. */
+  shipping_fee_override?: number;
 }
 
 export interface OrderResponse {
@@ -171,7 +175,10 @@ export const createOrder = async (
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-    const shipping_fee = calculateShippingFee(subtotal);
+    const shipping_fee =
+      params.shipping_fee_override !== undefined
+        ? params.shipping_fee_override
+        : calculateShippingFee(subtotal);
     const total_amount = subtotal + shipping_fee;
 
     // Step 4: Create order record
@@ -190,10 +197,12 @@ export const createOrder = async (
         customer_phone: params.customer_phone,
         shipping_first_name: params.shipping_first_name,
         shipping_last_name: params.shipping_last_name,
-        shipping_address: params.shipping_address,
-        shipping_city: params.shipping_city,
-        shipping_county: params.shipping_county,
-        shipping_country: params.shipping_country,
+        shipping_address:   params.shipping_address,
+        shipping_address_2: params.shipping_address_2 || null,
+        shipping_city:      params.shipping_city,
+        shipping_county:    params.shipping_county,
+        shipping_country:   params.shipping_country,
+        shipping_postcode:  params.shipping_postcode  || null,
         delivery_instructions: params.delivery_instructions || null,
       })
       .select()
@@ -274,24 +283,10 @@ export const createOrder = async (
       // Don't fail the order creation if timeline fails
     }
 
-    // Step 7: Deduct inventory
-    const inventoryDeductResult = await deductOrderInventory(
-      params.items,
-      order.id
-    );
-
-    if (!inventoryDeductResult.success) {
-      // Rollback: delete order, items, timeline
-      await supabase.from("orders").delete().eq("id", order.id);
-      console.error("Inventory deduction errors:", inventoryDeductResult.errors);
-      return {
-        success: false,
-        error: inventoryDeductResult.errors.length === 1
-          ? inventoryDeductResult.errors[0]
-          : "Failed to update product stock",
-        details: { errors: inventoryDeductResult.errors },
-      };
-    }
+    // Inventory is intentionally NOT deducted here.
+    // COD: Checkout.tsx calls deductOrderInventory immediately after this returns.
+    // M-Pesa: the payment-webhook deducts on confirmed payment.
+    // This prevents stock from being permanently reduced by failed/abandoned payments.
 
     return {
       success: true,
@@ -401,6 +396,23 @@ export const updateOrderStatus = async (
       error: err instanceof Error ? err.message : "Unknown error",
     };
   }
+};
+
+/**
+ * Lightweight poll helper used by Checkout to detect M-Pesa callback result.
+ * Returns null if the query fails so the caller can keep polling.
+ */
+export const getOrderPaymentStatus = async (
+  orderId: string
+): Promise<{ payment_status: string; payment_reference: string | null; payment_error: string | null } | null> => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("payment_status, payment_reference, payment_error")
+    .eq("id", orderId)
+    .single();
+
+  if (error || !data) return null;
+  return data as { payment_status: string; payment_reference: string | null; payment_error: string | null };
 };
 
 /**
