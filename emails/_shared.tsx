@@ -85,7 +85,7 @@ export function EmailLayout({ preview, children }: { preview: string; children: 
           <Section style={{ textAlign: "center", marginTop: 24 }}>
             <Text style={{ fontSize: 12, color: "#999999", lineHeight: "1.6", margin: 0 }}>
               © {new Date().getFullYear()} FashionUp. All rights reserved.
-              {"\n"}Nairobi, Kenya · fashionup.co.ke
+              {"\n"}Nairobi, Kenya · fashionup.vercel.app
             </Text>
           </Section>
         </Container>

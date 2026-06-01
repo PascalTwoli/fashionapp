@@ -109,7 +109,7 @@ function base(title: string, preview: string, body: string): string {
   </div>
   <div class="footer">
     &copy; ${new Date().getFullYear()} FashionUp. All rights reserved.<br />
-    Nairobi, Kenya &middot; <a href="https://fashionup.co.ke" style="color:#999;">fashionup.co.ke</a>
+    Nairobi, Kenya &middot; <a href="https://fashionup.vercel.app" style="color:#999;">fashionup.vercel.app</a>
   </div>
 </div>
 </body>
