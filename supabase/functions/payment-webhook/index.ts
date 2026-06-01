@@ -17,6 +17,30 @@ const ok = () =>
     headers: { "Content-Type": "application/json" },
   });
 
+async function fireNotification(event: "payment_received" | "payment_failed", orderId: string) {
+  // Must be awaited — Deno terminates the function when serve() returns,
+  // dropping unawaited promises. 25s abort keeps us inside Safaricom's 30s window.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25_000);
+  try {
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-notification`;
+    await fetch(url, {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY")!,
+      },
+      body: JSON.stringify({ event, orderId }),
+    });
+  } catch (err) {
+    console.warn(`[payment-webhook] Notification ${event} failed:`, err);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function adjustInventory(
   supabase: ReturnType<typeof createClient>,
   orderId: string,
@@ -88,9 +112,14 @@ serve(async (req) => {
     // Idempotency guard
     if (order.payment_status !== "pending") return ok();
 
+    // Determine the notification event first, then process the payment.
+    // We respond to Safaricom immediately with ok() and schedule the
+    // notification via EdgeRuntime.waitUntil so the function stays alive
+    // after the response is sent — avoiding Safaricom connection timeouts.
+    let notifEvent: "payment_received" | "payment_failed";
+
     if (resultCode === 0) {
       // ── Payment success ──────────────────────────────────
-      // Deduct stock now that payment is confirmed
       await adjustInventory(supabase, order.id, "deduct");
 
       await supabase
@@ -113,10 +142,9 @@ serve(async (req) => {
       });
 
       console.log(`[payment-webhook] Order ${order.order_number} confirmed – receipt ${mpesaReceiptNumber}`);
+      notifEvent = "payment_received";
     } else {
       // ── Payment failure ──────────────────────────────────
-      // Inventory is NOT restored here because M-Pesa orders never deduct
-      // stock until payment is confirmed. Cancelling the order is enough.
       await supabase
         .from("orders")
         .update({
@@ -135,6 +163,18 @@ serve(async (req) => {
       });
 
       console.log(`[payment-webhook] Order ${order.order_number} failed: ${resultDesc}`);
+      notifEvent = "payment_failed";
+    }
+
+    // Schedule notification AFTER responding so Safaricom isn't kept waiting.
+    // EdgeRuntime.waitUntil keeps the function alive after ok() is returned.
+    const notifPromise = fireNotification(notifEvent, order.id);
+    try {
+      // deno-lint-ignore no-explicit-any
+      (globalThis as any).EdgeRuntime.waitUntil(notifPromise);
+    } catch {
+      // EdgeRuntime.waitUntil not available — await instead as fallback
+      await notifPromise;
     }
 
     return ok();

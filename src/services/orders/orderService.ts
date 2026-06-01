@@ -288,6 +288,11 @@ export const createOrder = async (
     // M-Pesa: the payment-webhook deducts on confirmed payment.
     // This prevents stock from being permanently reduced by failed/abandoned payments.
 
+    // Fire order_placed notification (fire-and-forget — don't block order flow)
+    supabase.functions.invoke("send-notification", {
+      body: { event: "order_placed", orderId: order.id },
+    }).catch(err => console.warn("[notification] order_placed failed:", err));
+
     return {
       success: true,
       order: {
