@@ -6,7 +6,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, ShoppingCart, Users, Settings, Truck, CreditCard, Smartphone, ImageIcon, ChevronRight } from 'lucide-react';
+import { Plus, Package, ShoppingCart, Users, Settings, Truck, CreditCard, Smartphone, ImageIcon, Bell, ChevronRight } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
 import AdvancedOrderManagement from '@/components/admin/AdvancedOrderManagement';
 import { supabase } from '@/integrations/supabase/client';
@@ -181,6 +181,12 @@ const AdminDashboard = () => {
                   title: "Image Processing",
                   description: "Background removal and product recommendation rules",
                   href: "/admin/settings/image-processing",
+                },
+                {
+                  icon: Bell,
+                  title: "Notifications",
+                  description: "Email alerts for orders, payments, and status changes",
+                  href: "/admin/settings/notifications",
                 },
               ].map(({ icon: Icon, title, description, href }) => (
                 <button
