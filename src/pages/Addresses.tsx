@@ -31,9 +31,12 @@ const emptyForm = {
   first_name: '',
   last_name: '',
   phone: '',
+  email: '',
   address: '',
+  address_2: '',
   city: '',
   county: '',
+  postcode: '',
   country: 'Kenya',
   is_default: false,
 };
@@ -66,12 +69,15 @@ const Addresses = () => {
     setEditingId(addr.id);
     setForm({
       first_name: addr.first_name,
-      last_name: addr.last_name,
-      phone: addr.phone,
-      address: addr.address,
-      city: addr.city,
-      county: addr.county,
-      country: addr.country,
+      last_name:  addr.last_name,
+      phone:      addr.phone,
+      email:      addr.email     ?? '',
+      address:    addr.address,
+      address_2:  addr.address_2 ?? '',
+      city:       addr.city,
+      county:     addr.county,
+      postcode:   addr.postcode  ?? '',
+      country:    addr.country,
       is_default: addr.is_default,
     });
     setSheetOpen(true);
@@ -79,7 +85,7 @@ const Addresses = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.first_name || !form.last_name || !form.phone || !form.address || !form.city || !form.county) {
+    if (!form.first_name || !form.last_name || !form.phone || !form.address || !form.city || !form.county || !form.country) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
@@ -176,8 +182,12 @@ const Addresses = () => {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{addr.phone}</p>
+                {addr.email && <p className="text-xs text-muted-foreground">{addr.email}</p>}
                 <p className="text-xs text-muted-foreground">{addr.address}</p>
-                <p className="text-xs text-muted-foreground">{addr.city}, {addr.county}</p>
+                {addr.address_2 && <p className="text-xs text-muted-foreground">{addr.address_2}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {addr.city}, {addr.county}{addr.postcode ? ` ${addr.postcode}` : ''}
+                </p>
                 <p className="text-xs text-muted-foreground">{addr.country}</p>
               </div>
               <div className="flex flex-col gap-1 flex-shrink-0">
@@ -223,78 +233,70 @@ const Addresses = () => {
           </SheetHeader>
 
           <form onSubmit={handleSave} className="space-y-4">
+            {/* Name */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs uppercase tracking-wider">First name *</Label>
-                <Input
-                  className="mt-1 rounded-none h-10"
-                  value={form.first_name}
-                  onChange={e => handleField('first_name', e.target.value)}
-                  required
-                />
+                <Input className="mt-1 rounded-none h-10" value={form.first_name}
+                  onChange={e => handleField('first_name', e.target.value)} required />
               </div>
               <div>
                 <Label className="text-xs uppercase tracking-wider">Last name *</Label>
-                <Input
-                  className="mt-1 rounded-none h-10"
-                  value={form.last_name}
-                  onChange={e => handleField('last_name', e.target.value)}
-                  required
-                />
+                <Input className="mt-1 rounded-none h-10" value={form.last_name}
+                  onChange={e => handleField('last_name', e.target.value)} required />
               </div>
             </div>
 
+            {/* Contact */}
             <div>
               <Label className="text-xs uppercase tracking-wider">Phone *</Label>
-              <Input
-                className="mt-1 rounded-none h-10"
-                type="tel"
-                placeholder="07XXXXXXXX"
-                value={form.phone}
-                onChange={e => handleField('phone', e.target.value)}
-                required
-              />
+              <Input className="mt-1 rounded-none h-10" type="tel" placeholder="+254..."
+                value={form.phone} onChange={e => handleField('phone', e.target.value)} required />
             </div>
 
+            <div>
+              <Label className="text-xs uppercase tracking-wider">Email address</Label>
+              <Input className="mt-1 rounded-none h-10" type="email" placeholder="your@email.com"
+                value={form.email} onChange={e => handleField('email', e.target.value)} />
+            </div>
+
+            {/* Street address */}
             <div>
               <Label className="text-xs uppercase tracking-wider">Street address *</Label>
-              <Input
-                className="mt-1 rounded-none h-10"
-                placeholder="House / apartment / street"
-                value={form.address}
-                onChange={e => handleField('address', e.target.value)}
-                required
-              />
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <Input className="rounded-none h-10" placeholder="House number and street name"
+                  value={form.address} onChange={e => handleField('address', e.target.value)} required />
+                <Input className="rounded-none h-10" placeholder="Apartment, suite, unit, etc. (optional)"
+                  value={form.address_2} onChange={e => handleField('address_2', e.target.value)} />
+              </div>
             </div>
 
+            {/* Town / County */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs uppercase tracking-wider">City *</Label>
-                <Input
-                  className="mt-1 rounded-none h-10"
-                  value={form.city}
-                  onChange={e => handleField('city', e.target.value)}
-                  required
-                />
+                <Label className="text-xs uppercase tracking-wider">Town / City *</Label>
+                <Input className="mt-1 rounded-none h-10" value={form.city}
+                  onChange={e => handleField('city', e.target.value)} required />
               </div>
               <div>
-                <Label className="text-xs uppercase tracking-wider">County *</Label>
-                <Input
-                  className="mt-1 rounded-none h-10"
-                  value={form.county}
-                  onChange={e => handleField('county', e.target.value)}
-                  required
-                />
+                <Label className="text-xs uppercase tracking-wider">County / State *</Label>
+                <Input className="mt-1 rounded-none h-10" value={form.county}
+                  onChange={e => handleField('county', e.target.value)} required />
               </div>
             </div>
 
-            <div>
-              <Label className="text-xs uppercase tracking-wider">Country</Label>
-              <Input
-                className="mt-1 rounded-none h-10"
-                value={form.country}
-                onChange={e => handleField('country', e.target.value)}
-              />
+            {/* Postcode / Country */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-wider">Postcode / ZIP</Label>
+                <Input className="mt-1 rounded-none h-10" placeholder="e.g. 00100"
+                  value={form.postcode} onChange={e => handleField('postcode', e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-wider">Country / Region *</Label>
+                <Input className="mt-1 rounded-none h-10" value={form.country}
+                  onChange={e => handleField('country', e.target.value)} required />
+              </div>
             </div>
 
             <div className="flex items-center gap-2 pt-1">

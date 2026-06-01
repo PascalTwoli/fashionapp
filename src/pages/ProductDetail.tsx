@@ -289,7 +289,7 @@ const ProductDetail = () => {
 			product_id: product.id,
 			variant_id: selectedVariant?.id,
 			name: product.name,
-			price: product.price,
+			price: product.discount_price ?? product.price,
 			image: product.images?.[0] || product.image,
 			size: selectedSize,
 			color: selectedColor,

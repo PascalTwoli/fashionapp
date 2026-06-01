@@ -21,4 +21,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // Prevents Vite's pre-bundler from processing @imgly/background-removal
+    // and its WASM/WebGPU transitive deps at dev-server startup.
+    exclude: ["@imgly/background-removal"],
+  },
 }));

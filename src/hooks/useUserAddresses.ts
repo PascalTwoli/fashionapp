@@ -13,10 +13,13 @@ export interface UserAddress {
   first_name: string;
   last_name: string;
   phone: string;
+  email?: string;
   address: string;
+  address_2?: string;
   city: string;
   county: string;
   country: string;
+  postcode?: string;
   is_default: boolean;
   created_at: string;
   updated_at: string;

@@ -10,12 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useScrollDetection } from "@/hooks/useScrollDetection";
 import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import { formatKES } from "@/lib/format";
+import { useShippingSettings, calculateShipping } from "@/hooks/useShippingSettings";
 
 const ShoppingBagPage = () => {
 	const navigate = useNavigate();
 	const { items, updateQuantity, removeFromCart, totalPrice, totalItems } =
 		useCart();
 	const { toast } = useToast();
+	const { data: shippingSettings } = useShippingSettings();
 
 	// Scroll detection and navbar visibility
 	const scrollState = useScrollDetection();
@@ -57,7 +59,9 @@ const ShoppingBagPage = () => {
 		});
 	}, [validation.lowStockItems.length]);
 
-	const shipping = totalPrice >= 10000 || totalPrice === 0 ? 0 : 500;
+	const shipping = shippingSettings
+		? calculateShipping(totalPrice, shippingSettings)
+		: totalPrice >= 10000 || totalPrice === 0 ? 0 : 500;
 	const grandTotal = totalPrice + shipping;
 
 	const canCheckout = items.length > 0 && validation.isValid && !isChecking;
