@@ -13,6 +13,24 @@ import {
 } from "@/types/admin";
 import { restoreOrderInventory } from "@/lib/inventoryOperations";
 
+type NotificationEvent =
+  | "order_confirmed" | "order_processing" | "order_shipped"
+  | "order_delivered" | "order_cancelled";
+
+const STATUS_TO_EVENT: Partial<Record<OrderStatusType, NotificationEvent>> = {
+  confirmed:  "order_confirmed",
+  processing: "order_processing",
+  shipped:    "order_shipped",
+  delivered:  "order_delivered",
+  cancelled:  "order_cancelled",
+};
+
+function fireNotification(event: NotificationEvent, orderId: string) {
+  supabase.functions.invoke("send-notification", {
+    body: { event, orderId },
+  }).catch(err => console.warn(`[notification] ${event} failed:`, err));
+}
+
 /**
  * Fetch orders with advanced filtering, searching, and pagination
  */
@@ -189,6 +207,10 @@ export const updateOrderStatus = async (
       });
 
     if (timelineError) throw timelineError;
+
+    // Fire status-change notification (fire-and-forget)
+    const event = STATUS_TO_EVENT[newStatus];
+    if (event) fireNotification(event, orderId);
 
     return { success: true };
   } catch (err) {
