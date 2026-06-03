@@ -196,14 +196,14 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 		<>
 			{/* Backdrop */}
 			<div
-				className="fixed inset-0 z-40 bg-black/50"
+				className="fixed inset-0 z-[99] bg-black/50"
 				onClick={handleClose}
 				style={{ animation: "fadeIn 0.2s ease-out" }}
 			/>
 
 			{/* Drawer container */}
 			<div
-				className="fixed inset-0 z-50 w-full bg-background overflow-hidden flex flex-col shadow-2xl"
+				className="fixed inset-0 z-[100] bg-background overflow-hidden flex flex-col shadow-2xl"
 				style={{ animation: "slideInRight 0.3s ease-out" }}>
 				{/* Sticky Header */}
 				<div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -310,7 +310,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 
 			{/* Unsaved changes confirmation modal */}
 			{showConfirmClose && (
-				<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+				<div className="fixed inset-0 z-[101] flex items-end sm:items-center justify-center p-4">
 					<div
 						className="absolute inset-0 bg-black/50"
 						onClick={() => setShowConfirmClose(false)}

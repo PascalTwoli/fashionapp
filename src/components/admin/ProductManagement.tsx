@@ -33,6 +33,7 @@ import { formatKES } from "@/lib/format";
 import { removeBackground, downloadProcessedImage, isRemoveBgCreditsLow, getRemoveBgCredits } from "@/lib/backgroundRemoval";
 import ProductForm from "./ProductForm";
 import EditProductDrawer from "./EditProductDrawer";
+import AddProductDrawer from "./AddProductDrawer";
 import ImageViewer from "../ImageViewer";
 import { uploadProductImages } from "@/lib/uploadProductImages";
 
@@ -64,7 +65,7 @@ const ProductManagement = () => {
 	const queryClient = useQueryClient();
 	const [products, setProducts] = useState<Product[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [showAddForm, setShowAddForm] = useState(false);
+	const [showAddDrawer, setShowAddDrawer] = useState(false);
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -562,7 +563,7 @@ const ProductManagement = () => {
 	};
 
 	const resetForm = () => {
-		setShowAddForm(false);
+		setShowAddDrawer(false);
 		setEditingProduct(null);
 		setIsDrawerOpen(false);
 	};
@@ -579,7 +580,7 @@ const ProductManagement = () => {
 					<h1 className="font-display text-lg">Product Management</h1>
 					<p className="text-xs text-muted-foreground">Inventory & catalogue operations</p>
 				</div>
-				<Button size="sm" onClick={() => setShowAddForm(true)} className="bg-foreground text-background rounded-none text-xs uppercase tracking-wider">
+				<Button size="sm" onClick={() => setShowAddDrawer(true)} className="bg-foreground text-background rounded-none text-xs uppercase tracking-wider">
 					<Plus className="w-4 h-4 mr-1" />
 					Add Product
 				</Button>
@@ -752,25 +753,8 @@ const ProductManagement = () => {
 			</Card>
 
 			{/* Add Product Form Card */}
-			{showAddForm && (
-				<Card className="border-border">
-					<CardContent className="p-6">
-						<h3 className="text-lg font-semibold mb-4">Add New Product</h3>
-						<ProductForm
-							onSubmit={handleSubmit}
-							isLoading={isSubmitting}
-							isInDrawer={false}
-						/>
-						<Button
-							variant="outline"
-							onClick={resetForm}
-							disabled={isSubmitting}
-							className="mt-4">
-							Cancel
-						</Button>
-					</CardContent>
-				</Card>
-			)}
+			{/* Removed inline form - now using AddProductDrawer instead for better UX */}
+
 			{/* Product Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{filteredProducts.map((product) => {
@@ -973,16 +957,15 @@ const ProductManagement = () => {
 				isLoading={isSubmitting}
 			/>
 
-			{/* Image Viewer Modal */}
-			{imageViewerOpen && imageViewerProduct && (
-				<ImageViewer
-					images={imageViewerProduct.images || []}
-					isOpen={imageViewerOpen}
-					onClose={() => setImageViewerOpen(false)}
-				/>
-			)}
+		{/* Add Product Drawer */}
+		<AddProductDrawer
+			isOpen={showAddDrawer}
+			onClose={resetForm}
+			onSubmit={handleSubmit}
+			isLoading={isSubmitting}
+		/>
 
-			{/* Stock alerts sheet */}
+		{/* Stock alerts sheet */}
 			<Sheet open={showStockSheet} onOpenChange={setShowStockSheet}>
 				<SheetContent className="w-full sm:max-w-md overflow-y-auto">
 					<SheetHeader className="mb-4">
