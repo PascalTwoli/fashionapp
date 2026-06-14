@@ -5,7 +5,6 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_DRIVE_SCOPES = [
   "https://www.googleapis.com/auth/drive.readonly",
-  "https://www.googleapis.com/auth/drive.file",
 ];
 
 // Flags to track if libraries are loaded

@@ -30,6 +30,9 @@ import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import Addresses from "./pages/Addresses";
 import PaymentMethods from "./pages/PaymentMethods";
+import LegalShell from "./pages/legal";
+import LegalOverview from "./pages/legal/Overview";
+import LegalPrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +70,10 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/addresses" element={<Addresses />} />
                 <Route path="/payment-methods" element={<PaymentMethods />} />
+                <Route path="/legal" element={<LegalShell />}>
+                  <Route index element={<LegalOverview />} />
+                  <Route path="privacy" element={<LegalPrivacyPolicy />} />
+                </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
