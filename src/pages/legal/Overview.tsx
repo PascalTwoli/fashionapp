@@ -19,7 +19,7 @@ const docs = [
 ];
 
 const LegalOverview = () => (
-  <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
     <h1 className="font-display text-3xl mb-2">Legal &amp; Privacy</h1>
     <p className="text-sm text-muted-foreground mb-10">
       Transparent, plain-language policies about how FashionUp operates and handles your data.
