@@ -59,6 +59,7 @@ const PrivacyPolicy = () => {
 
   const [activeId, setActiveId] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const setHeaderSlot = useContext(LegalHeaderSlotContext);
 
@@ -68,6 +69,9 @@ const PrivacyPolicy = () => {
     if (!ids.length) return;
 
     const update = () => {
+      // Show floating button after scrolling down 200px
+      setShowFloatingButton(window.scrollY > 200);
+
       // We want to highlight whichever section has the most content visible
       const viewportTop = window.scrollY + HEADER_H;
       const viewportBottom = window.scrollY + window.innerHeight;
@@ -129,31 +133,37 @@ const PrivacyPolicy = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, [panelOpen]);
 
-  // ── Inject Contents button into LegalShell header (mobile only) ───────────
+  // ── Inject floating TOC button into LegalShell slot (mobile only) ─────────
   useEffect(() => {
     setHeaderSlot(
       <button
         onClick={() => setPanelOpen(o => !o)}
-        className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+        className={[
+          'fixed bottom-6 right-4 z-50',
+          'w-14 h-14 rounded-full shadow-lg',
+          'bg-foreground text-background',
+          'flex items-center justify-center',
+          'transition-all duration-300',
+          'hover:scale-110 active:scale-95',
+          showFloatingButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16 pointer-events-none',
+        ].join(' ')}
         aria-label="Toggle table of contents"
       >
-        <AlignLeft className="w-4 h-4" />
-        Contents
+        <AlignLeft className="w-5 h-5" />
       </button>,
     );
     return () => setHeaderSlot(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showFloatingButton]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-20">
 
-      {/* ── Floating mobile TOC panel ─────────────────────────────────────── */}
+      {/* ── Mobile TOC panel (slides in from side when button clicked) ──────── */}
       {panelOpen && (
         <div
           ref={panelRef}
-          className="fixed right-4 z-50 w-72 bg-background border border-border shadow-xl rounded py-3 px-4 max-h-[65vh] overflow-y-auto lg:hidden"
-          style={{ top: HEADER_H + 8 }}
+          className="fixed right-4 bottom-24 z-40 w-72 bg-background border border-border shadow-xl rounded py-3 px-4 max-h-[60vh] overflow-y-auto lg:hidden"
         >
           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-medium">
             Sections
