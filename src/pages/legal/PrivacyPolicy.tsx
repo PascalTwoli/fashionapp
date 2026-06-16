@@ -64,24 +64,49 @@ const PrivacyPolicy = () => {
 
   // ── Scroll-based active section tracking ──────────────────────────────────
   useEffect(() => {
-    const ids = toc.map(t => t.id);
+    const ids = h2Items.map(t => t.id);
+    if (!ids.length) return;
 
     const update = () => {
-      const threshold = HEADER_H + 16;
-      let active = ids[0] ?? '';
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= threshold) {
-          active = id;
+      // We want to highlight whichever section has the most content visible
+      const viewportTop = window.scrollY + HEADER_H;
+      const viewportBottom = window.scrollY + window.innerHeight;
+      
+      let bestId = ids[0];
+      let maxVisible = 0;
+
+      for (let i = 0; i < ids.length; i++) {
+        const sectionStart = document.getElementById(ids[i]);
+        if (!sectionStart) continue;
+
+        // Section runs from this heading to the next heading (or end of document)
+        const sectionTop = sectionStart.offsetTop;
+        const sectionBottom = i < ids.length - 1
+          ? document.getElementById(ids[i + 1])!.offsetTop
+          : document.documentElement.scrollHeight;
+
+        // Calculate overlap between section and viewport
+        const overlapTop = Math.max(sectionTop, viewportTop);
+        const overlapBottom = Math.min(sectionBottom, viewportBottom);
+        const visibleAmount = Math.max(0, overlapBottom - overlapTop);
+
+        if (visibleAmount > maxVisible) {
+          maxVisible = visibleAmount;
+          bestId = ids[i];
         }
       }
-      setActiveId(active);
+
+      setActiveId(bestId);
     };
 
     window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
     update();
-    return () => window.removeEventListener('scroll', update);
-  }, [toc]);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [h2Items]);
 
   // ── Smooth scroll to section ───────────────────────────────────────────────
   const scrollTo = useCallback((id: string) => {
