@@ -37,15 +37,11 @@ This Privacy Policy is designed to:
 #### A. Account Registration & Authentication
 When you create an account on FashionUp, we collect:
 - **Full Name**
-
 - **Email Address**
-
 - **Password** (encrypted and handled by Supabase Authentication)
-- **Account Type** (Seller, Customer, or Administrator)
+- **Account Type** (Customer or Administrator; independent seller accounts may be introduced in future platform versions)
 - **Date and Time of Account Creation**
-
 - **Profile Photo** (optional)
-- **Bio/Description** (optional for sellers)
 
 #### B. Google Sign-In & OAuth Authentication
 When you choose to authenticate via Google Sign-In:
@@ -60,17 +56,18 @@ We use Supabase Authentication, which handles password security. We do not store
 After registration, you may provide:
 - Username
 - Profile photo and biographical information
-- Business information (if you are a seller)
 - Contact information and communication preferences
 
-#### D. Seller Product Information
-If you are a seller, we collect:
+#### D. Product Information (Administrator-Managed)
+FashionUp administrators currently manage all product listings, including:
 - Product names and descriptions
 - Product categories
 - Product pricing
 - Product inventory levels
-- Product images (uploaded directly or imported from Google Drive)
+- Product images (uploaded directly or imported from Google Drive by administrators)
 - Product variants (size, color, other attributes)
+
+**Note:** Future versions of FashionUp may allow independent sellers to create accounts and manage their own product listings. This Privacy Policy will be updated accordingly when such functionality is introduced.
 
 #### E. Customer Purchase Information
 When you purchase products, we collect:
@@ -162,10 +159,14 @@ When you authorize FashionUp to access your Google Drive:
 
 ### 4.1 Purpose of Google Drive Access
 
-FashionUp enables **sellers only** to access their Google Drive accounts to:
-- **Select and import product images** from files stored in their personal Google Drive
+FashionUp administrators may use Google Drive to:
+- **Select and import product images** from files stored in Google Drive
 - **Streamline product image management** without requiring manual file uploads
-- **Maintain image organization** by leveraging their existing Google Drive structure
+- **Maintain image organization** by leveraging existing Google Drive structure
+
+Google Drive is used only as an image source during import and is not used as FashionUp's primary storage platform. Images are copied to FashionUp-managed storage (Supabase) for platform use.
+
+**Note:** Future versions of FashionUp may allow independent sellers to connect their own Google Drive accounts for product image management.
 
 ### 4.2 Google APIs Used
 
@@ -262,16 +263,18 @@ You can disconnect one Google account and connect a different one:
 
 ### 4.9 User-Initiated Access
 
-FashionUp accesses Google Drive files **only when a seller explicitly chooses to connect Google Drive** and selects specific files for import into a product listing.
+FashionUp accesses Google Drive files **only when an administrator explicitly chooses to connect Google Drive** and selects specific files for import into a product listing.
 
 FashionUp does **not**:
 
-- Continuously scan, monitor, or index your Google Drive in the background
-- Access your Drive unless you actively trigger the file picker
-- Retain ongoing access to your Google Drive after a file has been imported
-- Analyze, read, or process any files you did not explicitly select
+- Continuously scan, monitor, or index Google Drive in the background
+- Access Google Drive unless an administrator actively triggers the file picker
+- Retain ongoing access to Google Drive after a file has been imported
+- Analyze, read, or process any files not explicitly selected
 
 Once a file is selected and imported, it is copied to FashionUp's storage and the original Google Drive file is no longer accessed.
+
+**Note:** When independent seller accounts are introduced, sellers will be able to connect their own Google Drive accounts following the same privacy-protective approach.
 
 ### 4.10 Google User Data Policy Compliance
 
@@ -304,8 +307,8 @@ FashionUp complies with Google's API Services User Data Policy by:
 
 ### 5.2 Google Drive Services
 
-- Enabling you to select images from your Google Drive
-- Importing selected images into your product listings
+- Enabling authorized administrators to select images from Google Drive
+- Importing selected images into FashionUp product listings
 - Displaying product information to customers
 - Managing product image libraries
 
@@ -385,12 +388,14 @@ We share information with carefully selected third parties who process data on o
 
 #### D. Storage Providers
 - **Supabase Storage** — stores product images and files
-  - Data Shared: Product images, seller-uploaded files
+  - Data Shared: Product images, administrator-uploaded files
   - Security: Encrypted storage with access controls
 
-- **Google Drive** — your personal storage (seller-initiated)
-  - Data Shared: Only files you explicitly select and authorize
+- **Google Drive** — administrator-managed storage for product images
+  - Data Shared: Only files explicitly selected and authorized by administrators
   - Security: Google's encryption and security standards
+  
+**Note:** When independent seller functionality is introduced, sellers will be able to connect their own Google Drive accounts for image management.
 
 #### E. Communication Services
 - **Email Services** (Google SMTP / Gmail) — sends transactional emails
@@ -451,7 +456,7 @@ Data is stored on infrastructure managed by Supabase within the European Union.
 - Order history: Retained for 7+ years (for compliance, tax, legal requirements)
 - Payment records: Retained for 7 years (for tax and legal requirements)
 - Cart items and wishlist: Retained while account is active; deleted 30 days after account deletion
-- Product listings (sellers): Retained as long as you maintain them
+- Product listings: Currently managed by administrators; retention policies will be updated when independent seller accounts are introduced
 - Messages and support tickets: Retained for 2+ years for support reference
 
 #### B. After Account Deletion
@@ -510,9 +515,9 @@ FashionUp does not currently maintain automated backup infrastructure. Data dele
 #### B. Authentication & Access Control
 - **Supabase Authentication**: Industry-standard password hashing (bcrypt)
 - **Session Tokens**: Secure, time-limited tokens for maintaining sessions
-- **Multi-Factor Authentication**: Not yet implemented; planned for future releases for admin and seller accounts
+- **Multi-Factor Authentication**: Not yet implemented; planned for future releases for administrator accounts and future seller accounts
 - **Row-Level Security (RLS)**: Database-level access controls prevent unauthorized data access
-- **Role-Based Access Control (RBAC)**: Users have defined roles (Customer, Seller, Admin) with specific permissions
+- **Role-Based Access Control (RBAC)**: Users have defined roles (Customer, Admin) with specific permissions; seller roles will be added when marketplace functionality is introduced
 
 #### C. Database Security
 - **Supabase Security**: Database access is restricted to authenticated application servers
@@ -852,7 +857,18 @@ FashionUp **does not:**
 - Combine Google user data with data from other sources for targeting
 - Use Google user data to train artificial intelligence models, machine learning models, or generalized algorithms
 
-### 17.3 Security
+### 17.3 Artificial Intelligence and Machine Learning
+
+FashionUp **does not:**
+
+- Use Google user data to train artificial intelligence models
+- Use Google user data to train machine learning models
+- Use Google user data to develop or improve generalized algorithms
+- Process Google user data through AI/ML systems for any purpose other than the core functionality described in this policy
+
+Google user data is used solely for its stated purpose: enabling administrators to import product images from Google Drive into FashionUp's product catalog.
+
+### 17.4 Security
 
 Google user data is protected with the same security measures as all personal data:
 - Encryption in transit and at rest
@@ -860,7 +876,7 @@ Google user data is protected with the same security measures as all personal da
 - Periodic security reviews
 - Compliance with industry standards
 
-### 17.4 Transparency
+### 17.5 Transparency
 
 FashionUp transparently discloses:
 - What Google user data is accessed
@@ -869,7 +885,7 @@ FashionUp transparently discloses:
 - How users can revoke access
 - How long data is retained
 
-### 17.5 User Control
+### 17.6 User Control
 
 Users have full control over their Google user data:
 - Can revoke access at any time via Google Settings or FashionUp Settings
@@ -877,7 +893,7 @@ Users have full control over their Google user data:
 - Can switch between Google accounts
 - Can download or export their data
 
-### 17.6 Compliance Certification
+### 17.7 Compliance Certification
 
 By using Google APIs, FashionUp certifies that it:
 - Complies with Google's API Services User Data Policy
@@ -926,8 +942,8 @@ Your continued use of FashionUp after changes constitutes your acceptance of the
 | **Personal Information** | Any information that identifies or could identify an individual |
 | **Google User Data** | Information obtained from Google about you or through your Google account |
 | **Processing** | Any operation performed on data (collection, storage, use, deletion) |
-| **Seller** | A user who creates an account to list and sell products |
-| **Customer** | A user who purchases products from sellers |
+| **Seller** | Future account type that will allow independent sellers to list and sell products (not currently available) |
+| **Customer** | A user who purchases products from FashionUp |
 | **Administrator** | A FashionUp employee with elevated permissions |
 | **Data Breach** | Unauthorized access to or disclosure of personal information |
 | **OAuth** | An authentication standard allowing third-party access with user permission |

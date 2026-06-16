@@ -14,7 +14,7 @@ const docs = [
     icon: FileText,
     title: 'Terms of Service',
     description: 'Rules and conditions for using the FashionUp platform.',
-    available: false,
+    available: true,
   },
 ];
 

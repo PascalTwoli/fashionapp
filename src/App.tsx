@@ -33,6 +33,7 @@ import PaymentMethods from "./pages/PaymentMethods";
 import LegalShell from "./pages/legal";
 import LegalOverview from "./pages/legal/Overview";
 import LegalPrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import LegalTermsOfService from "./pages/legal/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/legal" element={<LegalShell />}>
                   <Route index element={<LegalOverview />} />
                   <Route path="privacy" element={<LegalPrivacyPolicy />} />
+                  <Route path="terms" element={<LegalTermsOfService />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

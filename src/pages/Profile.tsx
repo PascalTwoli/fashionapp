@@ -19,6 +19,8 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  FileText,
+  Shield,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -105,6 +107,8 @@ const Profile = () => {
     { icon: MapPin, label: 'Addresses', onClick: () => navigate('/addresses') },
     { icon: CreditCard, label: 'Payment methods', onClick: () => navigate('/payment-methods') },
     { icon: HelpCircle, label: 'Help & support', onClick: () => {} },
+    { icon: Shield, label: 'Privacy Policy', onClick: () => navigate('/legal/privacy') },
+    { icon: FileText, label: 'Terms of Service', onClick: () => navigate('/legal/terms') },
   ];
 
   const initials = (profile?.full_name || user.email || 'U')
