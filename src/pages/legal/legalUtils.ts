@@ -8,6 +8,7 @@ export const LEGAL_TABS = [
   { label: 'Overview',          path: '/legal' },
   { label: 'Privacy Policy',    path: '/legal/privacy' },
   { label: 'Terms of Service',  path: '/legal/terms' },
+  { label: 'Data Deletion',     path: '/legal/data-deletion' },
 ];
 
 export function slugify(s: string): string {

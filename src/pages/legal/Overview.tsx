@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Shield, FileText } from 'lucide-react';
+import { Shield, FileText, Trash2 } from 'lucide-react';
 
 const docs = [
   {
@@ -14,6 +14,13 @@ const docs = [
     icon: FileText,
     title: 'Terms of Service',
     description: 'Rules and conditions for using the FashionUp platform.',
+    available: true,
+  },
+  {
+    path: '/legal/data-deletion',
+    icon: Trash2,
+    title: 'Data Deletion Policy',
+    description: 'How to request deletion of your account and personal data.',
     available: true,
   },
 ];
