@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { AlignLeft } from 'lucide-react';
-import policyContent from '../../../docs/legal/PRIVACY_POLICY.md?raw';
+import termsContent from '../../../docs/legal/TERMS_OF_SERVICE.md?raw';
 import { extractToc, mdToHtml, TocItem } from './legalUtils';
 import { LegalHeaderSlotContext } from '.';
 
@@ -52,9 +52,9 @@ function Toc({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const PrivacyPolicy = () => {
-  const html    = useMemo(() => mdToHtml(policyContent), []);
-  const toc     = useMemo(() => extractToc(policyContent), []);
+const TermsOfService = () => {
+  const html    = useMemo(() => mdToHtml(termsContent), []);
+  const toc     = useMemo(() => extractToc(termsContent), []);
   const h2Items = useMemo(() => toc.filter(t => t.level === 2), [toc]);
 
   const [activeId, setActiveId] = useState('');
@@ -216,4 +216,4 @@ const PrivacyPolicy = () => {
   );
 };
 
-export default PrivacyPolicy;
+export default TermsOfService;

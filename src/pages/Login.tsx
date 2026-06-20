@@ -158,6 +158,17 @@ const Login = () => {
                     Create an account
                   </Link>
                 </p>
+
+                {/* Legal links footer */}
+                <div className="flex items-center justify-center gap-3 pt-6 text-xs text-muted-foreground">
+                  <Link to="/legal/privacy" className="hover:text-foreground transition-colors">
+                    Privacy Policy
+                  </Link>
+                  <span>•</span>
+                  <Link to="/legal/terms" className="hover:text-foreground transition-colors">
+                    Terms of Service
+                  </Link>
+                </div>
               </form>
             </>
           )}

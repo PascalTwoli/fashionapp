@@ -4,6 +4,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/Logo';
@@ -14,6 +15,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { register, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,6 +26,16 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!agreedToTerms) {
+      toast({ 
+        title: 'Terms required', 
+        description: 'You must agree to the Terms of Service and Privacy Policy to create an account.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     if (password !== confirmPassword) {
       toast({ title: "Passwords don't match", variant: 'destructive' });
       return;
@@ -123,6 +135,37 @@ const Register = () => {
                 className="mt-1.5 rounded-none h-11"
                 required
               />
+            </div>
+
+            {/* Terms and Privacy Agreement */}
+            <div className="flex items-start gap-3 pt-2">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
+              >
+                I agree to FashionUp's{' '}
+                <Link
+                  to="/legal/terms"
+                  target="_blank"
+                  className="text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link
+                  to="/legal/privacy"
+                  target="_blank"
+                  className="text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
 
             <Button
