@@ -4,9 +4,11 @@ import { ArrowLeft, Trash2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/contexts/WishlistContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import WhatsAppButton from '@/components/WhatsAppButton';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
 import { useNavbarVisibility } from '@/hooks/useNavbarVisibility';
 import { formatKES } from '@/lib/format';
+import { generateProductSlug, generateProductUrl } from '@/lib/shareUtils';
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -78,15 +80,26 @@ const Wishlist = () => {
                       </span>
                     )}
                   </div>
-                  <div className="mt-auto flex justify-between items-center">
+                  <div className="mt-auto flex gap-2 items-center">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/product/${item.id}`)}
-                      className="text-xs uppercase tracking-wider underline underline-offset-4 px-0"
+                      className="text-xs uppercase tracking-wider underline underline-offset-4 px-0 flex-1"
                     >
                       View
                     </Button>
+                    <WhatsAppButton
+                      productName={item.name}
+                      price={item.price}
+                      productLink={generateProductUrl(generateProductSlug(item.name), item.id)}
+                      productImage={item.image}
+                      location="wishlist"
+                      variant="ghost"
+                      buttonSize="sm"
+                      className="text-xs uppercase tracking-wider px-2"
+                      showIcon={true}
+                    />
                     <button
                       onClick={() => removeFromWishlist(item.id)}
                       className="text-muted-foreground hover:text-destructive p-1"

@@ -4,6 +4,7 @@ import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, AlertCircle, CheckCircle }
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BottomNavigation from "@/components/BottomNavigation";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { useCart } from "@/contexts/CartContext";
 import { useCartInventoryValidation } from "@/hooks/useCartInventoryValidation";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +12,7 @@ import { useScrollDetection } from "@/hooks/useScrollDetection";
 import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import { formatKES } from "@/lib/format";
 import { useShippingSettings, calculateShipping } from "@/hooks/useShippingSettings";
+import { generateProductSlug, generateProductUrl } from "@/lib/shareUtils";
 
 const ShoppingBagPage = () => {
 	const navigate = useNavigate();
@@ -179,37 +181,55 @@ const ShoppingBagPage = () => {
 										</button>
 									</div>
 
-									<div className="mt-auto flex items-center justify-between">
-										<div className="flex items-center border border-border">
-											<button
-												onClick={() =>
-													updateQuantity(
-														item.id,
-														item.quantity - 1,
-													)
-												}
-												className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
-												aria-label="Decrease">
-												<Minus className="w-3 h-3" />
-											</button>
-											<span className="w-8 text-center text-sm">
-												{item.quantity}
+									<div className="mt-auto space-y-2">
+										<div className="flex items-center justify-between">
+											<div className="flex items-center border border-border">
+												<button
+													onClick={() =>
+														updateQuantity(
+															item.id,
+															item.quantity - 1,
+														)
+													}
+													className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+													aria-label="Decrease">
+													<Minus className="w-3 h-3" />
+												</button>
+												<span className="w-8 text-center text-sm">
+													{item.quantity}
+												</span>
+												<button
+													onClick={() =>
+														updateQuantity(
+															item.id,
+															item.quantity + 1,
+														)
+													}
+													className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
+													aria-label="Increase">
+													<Plus className="w-3 h-3" />
+												</button>
+											</div>
+											<span className="text-sm font-semibold">
+												{formatKES(item.price * item.quantity)}
 											</span>
-											<button
-												onClick={() =>
-													updateQuantity(
-														item.id,
-														item.quantity + 1,
-													)
-												}
-												className="w-8 h-8 flex items-center justify-center hover:bg-secondary"
-												aria-label="Increase">
-												<Plus className="w-3 h-3" />
-											</button>
 										</div>
-										<span className="text-sm font-semibold">
-											{formatKES(item.price * item.quantity)}
-										</span>
+										
+										{/* WhatsApp button for cart item */}
+										<WhatsAppButton
+											productName={item.name}
+											price={item.price}
+											productLink={generateProductUrl(generateProductSlug(item.name), item.product_id)}
+											productImage={item.image}
+											color={item.color}
+											productSize={item.size}
+											location="cart"
+											variant="ghost"
+											buttonSize="sm"
+											fullWidth={true}
+											className="h-8 text-xs uppercase tracking-wider border border-border hover:bg-secondary"
+											showIcon={true}
+										/>
 									</div>
 								</div>
 							</li>

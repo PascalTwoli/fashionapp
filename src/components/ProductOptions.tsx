@@ -32,7 +32,7 @@ const ProductOptions = ({
 	if (isCompletelyOutOfStock) {
 		return (
 			<div className="px-5 mt-8 space-y-6">
-				<div className="p-4 bg-muted rounded-lg border border-border">
+				<div className="p-4 bg-muted border border-border">
 					<p className="text-sm font-medium text-foreground">Out of Stock</p>
 					<p className="text-sm text-muted-foreground mt-1">
 						This product is currently unavailable. Please check back soon or explore similar items.
@@ -66,7 +66,7 @@ const ProductOptions = ({
 								key={color}
 								onClick={() => onColorChange(color)}
 								className={cn(
-									"px-4 h-11 text-sm border transition-colors rounded",
+									"px-4 h-11 text-sm border transition-colors",
 									selectedColor === color
 										? "border-foreground bg-foreground text-background"
 										: "border-border text-foreground hover:border-foreground",
@@ -76,7 +76,7 @@ const ProductOptions = ({
 						))}
 					</div>
 				) : (
-					<div className="text-sm text-muted-foreground p-3 bg-muted rounded">
+					<div className="text-sm text-muted-foreground p-3 bg-muted">
 						No colors available for this product
 					</div>
 				)}
@@ -102,7 +102,7 @@ const ProductOptions = ({
 									key={size}
 									onClick={() => onSizeChange(size)}
 									className={cn(
-										"h-11 text-sm font-medium border transition-colors rounded",
+										"h-11 text-sm font-medium border transition-colors",
 										selectedSize === size
 											? "border-foreground bg-foreground text-background"
 											: "border-border text-foreground hover:border-foreground",
@@ -112,12 +112,12 @@ const ProductOptions = ({
 							))}
 						</div>
 					) : (
-						<div className="text-sm text-muted-foreground p-3 bg-muted rounded">
+						<div className="text-sm text-muted-foreground p-3 bg-muted">
 							No sizes available for the selected color
 						</div>
 					)
 				) : (
-					<div className="text-sm text-muted-foreground p-3 bg-muted rounded">
+					<div className="text-sm text-muted-foreground p-3 bg-muted">
 						Choose a color to see available sizes
 					</div>
 				)}
@@ -132,7 +132,7 @@ const ProductOptions = ({
 			{(selectedColor || selectedSize) && onClearSelections && (
 				<button
 					onClick={onClearSelections}
-					className="w-full h-11 text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors rounded mt-2">
+					className="w-full h-11 text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors mt-2">
 					Clear Selections
 				</button>
 			)}

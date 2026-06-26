@@ -6,7 +6,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, ShoppingCart, Users, Settings, Truck, CreditCard, Smartphone, ImageIcon, Bell, ChevronRight } from 'lucide-react';
+import { Plus, Package, ShoppingCart, Users, Settings, Truck, CreditCard, Smartphone, ImageIcon, Bell, ChevronRight, MessageCircle } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
 import AdvancedOrderManagement from '@/components/admin/AdvancedOrderManagement';
 import { supabase } from '@/integrations/supabase/client';
@@ -175,6 +175,12 @@ const AdminDashboard = () => {
                   title: "M-Pesa / Daraja",
                   description: "Safaricom STK Push API credentials and environment",
                   href: "/admin/settings/daraja",
+                },
+                {
+                  icon: MessageCircle,
+                  title: "WhatsApp Chat",
+                  description: "Product inquiry via WhatsApp integration",
+                  href: "/admin/settings/whatsapp",
                 },
                 {
                   icon: ImageIcon,

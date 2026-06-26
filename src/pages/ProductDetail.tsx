@@ -19,10 +19,13 @@ import { useNavbarVisibility } from "@/hooks/useNavbarVisibility";
 import BottomNavigation from "@/components/BottomNavigation";
 import FloatingNavButton from "@/components/FloatingNavButton";
 import ShareProductSheet from "@/components/ShareProductSheet";
+import WhatsAppSheet from "@/components/WhatsAppSheet";
 import ProductInfo from "@/components/ProductInfo";
 import ProductOptions from "@/components/ProductOptions";
 import AddToCartButton from "@/components/AddToCartButton";
 import RecommendationSection from "@/components/RecommendationSection";
+import { generateProductWhatsAppUrl, fillWhatsAppTemplate } from "@/lib/whatsappService";
+import { useWhatsAppSettings } from "@/hooks/useWhatsAppSettings";
 import SizeGuideModal from "@/components/SizeGuideModal";
 import { useProduct, useAllProducts } from "@/hooks/useProducts";
 import { useProductVariants } from "@/hooks/useProductVariants";
@@ -58,9 +61,13 @@ const ProductDetail = () => {
 	const [quantity, setQuantity] = React.useState(1);
 	const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
 	const [isShareSheetOpen, setIsShareSheetOpen] = React.useState(false);
+	const [isWhatsAppSheetOpen, setIsWhatsAppSheetOpen] = React.useState(false);
 	const [isHeaderVisible, setIsHeaderVisible] = React.useState(true);
 	const [fullscreenIndex, setFullscreenIndex] = React.useState<number | null>(null);
 	const [requireWhiteBgForRecommendations, setRequireWhiteBgForRecommendations] = React.useState(true);
+
+	// WhatsApp settings
+	const { data: whatsAppSettings } = useWhatsAppSettings();
 
 	// Scroll detection and navbar visibility
 	const scrollState = useScrollDetection();
@@ -634,10 +641,49 @@ const ProductDetail = () => {
 				productId={product.id}
 			/>
 
+			{whatsAppSettings && (
+				<WhatsAppSheet
+					isOpen={isWhatsAppSheetOpen}
+					onClose={() => setIsWhatsAppSheetOpen(false)}
+					whatsappUrl={generateProductWhatsAppUrl(
+						whatsAppSettings.number || "",
+						whatsAppSettings.template || "",
+						{
+							productName: product.name,
+							price: product.discount_price ?? product.price,
+							color: selectedColor,
+							size: selectedSize,
+							productLink: generateProductUrl(generateProductSlug(product.name), product.id),
+						}
+					)}
+					message={fillWhatsAppTemplate(
+						whatsAppSettings.template || "",
+						{
+							productName: product.name,
+							price: product.discount_price ?? product.price,
+							color: selectedColor,
+							size: selectedSize,
+							productLink: generateProductUrl(generateProductSlug(product.name), product.id),
+						}
+					)}
+					openMode={whatsAppSettings.openMode}
+					productName={product.name}
+					productPrice={product.discount_price ?? product.price}
+					productImage={product.images?.[0] || product.image_url}
+				/>
+			)}
+
 				<AddToCartButton 
 					onAddToCart={handleAddToCart} 
 					selectedColor={selectedColor} 
-					selectedSize={selectedSize}					isNavbarVisible={isNavbarVisible}			/>
+					selectedSize={selectedSize}
+					isNavbarVisible={isNavbarVisible}
+					productName={product.name}
+					productPrice={product.discount_price ?? product.price}
+					productLink={generateProductUrl(generateProductSlug(product.name), product.id)}
+					productImage={product.images?.[0] || product.image_url}
+					onWhatsAppClick={() => setIsWhatsAppSheetOpen(true)}
+				/>
 			<FloatingNavButton isNavbarVisible={isNavbarVisible} onToggle={toggleNavbar} />
 			<BottomNavigation isVisible={isNavbarVisible} />
 			</div>

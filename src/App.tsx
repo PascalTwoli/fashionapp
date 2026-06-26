@@ -26,6 +26,7 @@ import AdminSettingsPaymentMethods from "./pages/AdminSettingsPaymentMethods";
 import AdminSettingsDaraja from "./pages/AdminSettingsDaraja";
 import AdminSettingsImageProcessing from "./pages/AdminSettingsImageProcessing";
 import AdminSettingsNotifications from "./pages/AdminSettingsNotifications";
+import AdminSettingsWhatsApp from "./pages/AdminSettingsWhatsApp";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import Addresses from "./pages/Addresses";
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/admin/settings/daraja" element={<AdminSettingsDaraja />} />
                 <Route path="/admin/settings/image-processing" element={<AdminSettingsImageProcessing />} />
                 <Route path="/admin/settings/notifications" element={<AdminSettingsNotifications />} />
+                <Route path="/admin/settings/whatsapp" element={<AdminSettingsWhatsApp />} />
                 <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/addresses" element={<Addresses />} />
