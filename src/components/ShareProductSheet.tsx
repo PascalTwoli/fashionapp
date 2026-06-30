@@ -7,6 +7,7 @@ import {
   copyToClipboard,
   isNativeShareSupported,
   shareViaNavigator,
+  shareWithImage,
   generateWhatsAppLink,
   generateFacebookLink,
   shareViaFacebook,
@@ -90,10 +91,13 @@ const ShareProductSheet: React.FC<ShareProductSheetProps> = ({
       const priceToUse = discountPrice ? discountPrice : productPrice;
       const shareText = `✨ *${productName}*\n💰 KES ${priceToUse.toLocaleString()}\n\nCheck out this product on *FashionUp* - your ultimate fashion shopping destination. Upgrade your wardrobe today!\n\n🛍️ Tap the link to shop:\n${productUrl}`;
       
-      const success = await shareViaNavigator({
+      // Try to share with image first (Web Share API Level 2)
+      // This will show immediate image preview in WhatsApp
+      const success = await shareWithImage(productImage, {
         title: productName,
-        text: shareText
+        text: shareText,
       });
+      
       setIsSharing(false);
 
       if (success) {

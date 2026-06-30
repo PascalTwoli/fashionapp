@@ -96,6 +96,80 @@ export const shareViaNavigator = async (shareData: {
 };
 
 /**
+ * Share with image file using Web Share API Level 2
+ * This includes the actual image file in the share, showing immediate preview in WhatsApp
+ * 
+ * @param imageUrl - URL of the product image to share
+ * @param shareData - Title, text, and URL to share
+ * @returns Promise<boolean> - true if share succeeded, false if failed or cancelled
+ */
+export const shareWithImage = async (
+  imageUrl: string,
+  shareData: {
+    title?: string;
+    text?: string;
+    url?: string;
+  }
+): Promise<boolean> => {
+  if (!isNativeShareSupported()) {
+    console.warn('[ShareUtils] Native Share API not supported');
+    return false;
+  }
+
+  try {
+    // Check if browser supports sharing files
+    if (!navigator.canShare) {
+      console.warn('[ShareUtils] navigator.canShare not supported, falling back to text-only share');
+      return shareViaNavigator(shareData);
+    }
+
+    // Fetch the image
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    
+    // Create a File object from the blob
+    const fileName = imageUrl.split('/').pop() || 'product-image.jpg';
+    const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+
+    // Prepare share data with file
+    const shareDataWithFile = {
+      ...shareData,
+      files: [file],
+    };
+
+    // Check if the data can be shared (some browsers have restrictions)
+    if (!navigator.canShare(shareDataWithFile)) {
+      console.warn('[ShareUtils] Cannot share with file, falling back to text-only share');
+      return shareViaNavigator(shareData);
+    }
+
+    // Share with image
+    await navigator.share(shareDataWithFile);
+    return true;
+  } catch (error: any) {
+    // User dismissed share dialog (expected behavior)
+    if (error.name === 'AbortError') {
+      return false;
+    }
+    
+    console.error('[ShareUtils] Share with image failed:', error);
+    
+    // Fallback to text-only share
+    console.warn('[ShareUtils] Attempting fallback to text-only share');
+    try {
+      return await shareViaNavigator(shareData);
+    } catch (fallbackError) {
+      console.error('[ShareUtils] Fallback share also failed:', fallbackError);
+      return false;
+    }
+  }
+};
+
+/**
  * Generate WhatsApp share link
  * For mobile: returns null to use native Share API instead
  * For desktop: returns web.whatsapp.com URL
@@ -121,7 +195,7 @@ export const initFacebookSDK = (): Promise<void> => {
 
     // Load Facebook SDK
     (window as any).fbAsyncInit = function () {
-      FB.init({
+      (window as any).FB.init({
         appId: '1234567890', // Placeholder - will work without it for share dialog
         xfbml: true,
         version: 'v18.0',
